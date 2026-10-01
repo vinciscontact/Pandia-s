@@ -1,0 +1,80 @@
+---
+import Icon from "./Icon.astro";
+import { waLink } from "../data/site";
+---
+<section class="cta">
+  <div class="wrap cta__inner">
+    <div class="cta__copy" data-reveal>
+      <p class="eyebrow">Weddings · Office lunches · Family functions</p>
+      <h2>Feeding a crowd? <em>Bring the biryani man.</em></h2>
+      <p>Tell us the date, the headcount and the dishes. We'll get back to you with a quote.</p>
+      <div class="cta__actions">
+        <a class="btn btn--gold" href={waLink("Hi Pandia's! I'd like a catering quote.\nDate:\nHeadcount:\nDishes:")} target="_blank" rel="noopener"><Icon name="whatsapp" /> Get a catering quote</a>
+        <a class="btn btn--ghost" href="/branches#book">Book a table</a>
+      </div>
+    </div>
+    <div class="cta__art" data-reveal style="--d:.1s">
+      <img src="/img/mascot-ok.webp" alt="The Hotel Pandia's biryani man doing a perfect sign" width="600" height="582" loading="lazy" />
+    </div>
+  </div>
+</section>
+<style>
+  .cta {
+    padding: clamp(40px, 6vw, 80px) 0;
+  }
+  .cta__inner {
+    background:
+      radial-gradient(70% 90% at 85% 60%, rgb(232 176 74 / 0.35), transparent 60%),
+      linear-gradient(135deg, var(--red-600), var(--red-700) 60%, var(--maroon-800));
+    border-radius: calc(var(--radius) * 1.6);
+    color: var(--cream-50);
+    display: grid;
+    grid-template-columns: 1.2fr 0.8fr;
+    align-items: center;
+    overflow: hidden;
+    position: relative;
+  }
+  .cta__copy {
+    padding: clamp(32px, 6vw, 80px);
+  }
+  .eyebrow {
+    color: var(--gold-300);
+  }
+  h2 {
+    font-size: var(--step-4);
+    margin: 16px 0 18px;
+  }
+  h2 em {
+    color: var(--gold-300);
+  }
+  .cta__copy > p:not(.eyebrow) {
+    font-size: var(--step-1);
+    max-width: 32rem;
+    opacity: 0.9;
+  }
+  .cta__actions {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-top: 28px;
+  }
+  .cta__art {
+    align-self: end;
+  }
+  .cta__art img {
+    width: 100%;
+    max-height: 520px;
+    object-fit: contain;
+    object-position: bottom;
+    filter: drop-shadow(0 30px 40px rgb(0 0 0 / 0.35));
+  }
+  @media (max-width: 800px) {
+    .cta__inner {
+      grid-template-columns: 1fr;
+    }
+    .cta__art {
+      max-width: 300px;
+      margin: -20px auto 0;
+    }
+  }
+</style>

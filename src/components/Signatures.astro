@@ -1,0 +1,71 @@
+---
+import SectionHead from "./SectionHead.astro";
+import DishCard from "./DishCard.astro";
+import Icon from "./Icon.astro";
+import { signatures } from "../data/menu";
+const [feature, ...rest] = signatures;
+---
+<section class="sig" id="signatures">
+  <div class="wrap">
+    <SectionHead eyebrow="Signatures" title="The plates that built <em>our name.</em>" intro="Six things to order on your first visit. Come back for the rest." />
+    <div class="sig__grid">
+      <div class="sig__feature" data-reveal>
+        <DishCard dish={feature} variant="feature" index={0} image="/img/biryani-tray.webp" />
+      </div>
+      {rest.map((d, i) => (
+        <div data-reveal style={`--d:${(i % 3) * 0.08}s`}>
+          <DishCard dish={d} variant="tile" index={i + 1} />
+        </div>
+      ))}
+    </div>
+    <div class="sig__more" data-reveal>
+      <a class="btn btn--dark" href="/menu">Open the full menu <Icon name="arrow" /></a>
+    </div>
+  </div>
+</section>
+<style>
+  .sig {
+    padding: clamp(80px, 12vw, 150px) 0 clamp(60px, 8vw, 100px);
+  }
+  .sig__grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: clamp(16px, 2vw, 26px);
+  }
+  .sig__grid > div {
+    display: flex;
+  }
+  .sig__grid > div > :global(*) {
+    flex: 1;
+  }
+  .sig__feature {
+    grid-column: span 2;
+    grid-row: span 2;
+  }
+  .sig__feature :global(.dish__art img) {
+    object-position: 50% 78%;
+  }
+  .sig__feature :global(.dish__art) {
+    aspect-ratio: auto;
+    flex: 1;
+    min-height: 300px;
+  }
+  .sig__more {
+    margin-top: 40px;
+    text-align: center;
+  }
+  @media (max-width: 900px) {
+    .sig__grid {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+  @media (max-width: 560px) {
+    .sig__grid {
+      grid-template-columns: 1fr;
+    }
+    .sig__feature {
+      grid-column: auto;
+      grid-row: auto;
+    }
+  }
+</style>

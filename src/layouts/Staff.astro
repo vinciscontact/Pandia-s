@@ -1,0 +1,350 @@
+---
+// Chef Magic layout: the private staff screens. Not linked in the nav, not indexed.
+import "@fontsource-variable/fraunces";
+import "@fontsource-variable/bricolage-grotesque";
+import "@fontsource/jetbrains-mono/500.css";
+import "@fontsource/jetbrains-mono/600.css";
+import "../styles/global.css";
+import Icon from "../components/Icon.astro";
+import { SCREENS } from "../lib/staff";
+
+interface Props {
+  title: string;
+  dark?: boolean; // the kitchen screen is dark for glare-free reading across a hot kitchen
+  bare?: boolean; // login page: no top bar
+}
+const { title, dark = false, bare = false } = Astro.props;
+---
+<!doctype html>
+<html lang="en" class={dark ? "staff staff--dark" : "staff"}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="theme-color" content={dark ? "#22060a" : "#3a0a10"} />
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    <title>{title} · Chef Magic · Hotel Pandia's</title>
+  </head>
+  <body>
+    {!bare && (
+      <header class="sbar" data-staffbar>
+        <a class="sbar__brand" href="/chef" aria-label="Chef Magic home">
+          <img src="/img/logo-emblem.webp" alt="" width="40" height="40" />
+          <span>Chef Magic</span>
+        </a>
+        <nav class="sbar__nav" aria-label="Staff screens">
+          {SCREENS.map((s) => <a href={s.path} data-screen hidden><Icon name={s.icon} /> {s.label}</a>)}
+        </nav>
+        <div class="sbar__right">
+          <select class="sbar__branch" data-branch-select hidden aria-label="Branch"></select>
+          <span class="sbar__fixed" data-branch-fixed></span>
+          <span class="sbar__me" data-me></span>
+          <button type="button" class="sbtn sbtn--icon" data-logout aria-label="Sign out" title="Sign out"><Icon name="logout" /></button>
+        </div>
+      </header>
+    )}
+    <main class="smain">
+      <slot />
+    </main>
+  </body>
+</html>
+
+<style is:global>
+  /* ---------- Chef Magic design system (staff screens only) ---------- */
+  html.staff {
+    --s-bg: var(--cream-100);
+    --s-card: #fff;
+    --s-ink: var(--ink);
+    --s-soft: var(--ink-soft);
+    --s-line: color-mix(in oklab, var(--ink) 12%, transparent);
+    --s-hover: var(--cream-200);
+    background: var(--s-bg);
+    scroll-behavior: auto;
+  }
+  html.staff--dark {
+    --s-bg: #1a0508;
+    --s-card: #2b0c11;
+    --s-ink: #fff4e3;
+    --s-soft: #d9b9a5;
+    --s-line: rgb(255 255 255 / 0.1);
+    --s-hover: #3b141a;
+    color-scheme: dark;
+  }
+  html.staff body {
+    background: var(--s-bg);
+    color: var(--s-ink);
+    min-height: 100svh;
+  }
+  /* hide the page until the role check finishes, so nobody sees a flash of data they can't use */
+  html.staff:not(.staff-ready) .smain > :not(.login) {
+    visibility: hidden;
+  }
+  .smain {
+    padding: 18px var(--gutter) 40px;
+  }
+
+  .sbar {
+    position: sticky;
+    top: 0;
+    z-index: 40;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 10px var(--gutter);
+    background: var(--maroon-900);
+    color: var(--cream-50);
+  }
+  .sbar__brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: inherit;
+    text-decoration: none;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 1.15rem;
+  }
+  .sbar__brand img {
+    width: 36px;
+    height: 36px;
+  }
+  .sbar__nav {
+    display: flex;
+    gap: 4px;
+  }
+  .sbar__nav a {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 14px;
+    border-radius: 999px;
+    color: color-mix(in oklab, var(--cream-50) 75%, transparent);
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.95rem;
+  }
+  .sbar__nav a[hidden] {
+    display: none;
+  }
+  .sbar__nav a:hover {
+    color: #fff;
+    background: rgb(255 255 255 / 0.08);
+  }
+  .sbar__nav a[aria-current="page"] {
+    background: var(--gold-500);
+    color: var(--maroon-900);
+  }
+  .sbar__nav svg {
+    width: 18px;
+  }
+  .sbar__right {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .sbar__branch {
+    background: rgb(255 255 255 / 0.1);
+    color: #fff;
+    border: 1px solid rgb(255 255 255 / 0.2);
+    border-radius: 999px;
+    padding: 8px 14px;
+    font-weight: 600;
+  }
+  .sbar__branch option {
+    color: var(--ink);
+  }
+  .sbar__fixed {
+    font-weight: 600;
+  }
+  .sbar__fixed:empty {
+    display: none;
+  }
+  .sbar__me {
+    font-size: 0.85rem;
+    opacity: 0.8;
+  }
+  @media (max-width: 760px) {
+    .sbar {
+      flex-wrap: wrap;
+      gap: 8px 12px;
+    }
+    .sbar__brand span,
+    .sbar__me {
+      display: none;
+    }
+    .sbar__nav {
+      order: 3;
+      width: 100%;
+      overflow-x: auto;
+    }
+  }
+
+  /* buttons */
+  .sbtn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 44px;
+    padding: 0 18px;
+    border-radius: 12px;
+    border: 1.5px solid var(--s-line);
+    background: var(--s-card);
+    color: var(--s-ink);
+    font-weight: 650;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: transform 0.15s, background 0.2s, opacity 0.2s;
+    white-space: nowrap;
+  }
+  .sbtn:hover {
+    background: var(--s-hover);
+  }
+  .sbtn:active {
+    transform: scale(0.97);
+  }
+  .sbtn[disabled] {
+    opacity: 0.5;
+    pointer-events: none;
+  }
+  .sbtn svg {
+    width: 18px;
+  }
+  .sbtn--primary {
+    background: var(--red-600);
+    border-color: var(--red-600);
+    color: #fff;
+  }
+  .sbtn--primary:hover {
+    background: var(--red-700);
+  }
+  .sbtn--gold {
+    background: var(--gold-500);
+    border-color: var(--gold-500);
+    color: var(--maroon-900);
+  }
+  .sbtn--gold:hover {
+    background: var(--gold-600);
+  }
+  .sbtn--green {
+    background: var(--leaf);
+    border-color: var(--leaf);
+    color: #fff;
+  }
+  .sbtn--green:hover {
+    background: #25722e;
+  }
+  .sbtn--icon {
+    width: 42px;
+    min-height: 42px;
+    padding: 0;
+    border-radius: 50%;
+    background: rgb(255 255 255 / 0.1);
+    border-color: transparent;
+    color: inherit;
+  }
+  .sbtn--sm {
+    min-height: 34px;
+    padding: 0 12px;
+    font-size: 0.85rem;
+    border-radius: 10px;
+  }
+
+  /* cards, headings, forms */
+  .scard {
+    background: var(--s-card);
+    border: 1px solid var(--s-line);
+    border-radius: 18px;
+    padding: 18px;
+    box-shadow: 0 1px 2px rgb(58 10 16 / 0.05);
+  }
+  .shead {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+  }
+  .shead h1 {
+    font-size: var(--step-2);
+    margin: 0;
+  }
+  .shead .grow {
+    flex: 1;
+  }
+  .sfield {
+    display: grid;
+    gap: 6px;
+    font-weight: 600;
+    font-size: 0.88rem;
+  }
+  .sfield input,
+  .sfield select,
+  .sfield textarea,
+  .sinput {
+    font: inherit;
+    font-weight: 500;
+    font-size: 0.98rem;
+    border: 1.5px solid var(--s-line);
+    background: var(--s-bg);
+    color: var(--s-ink);
+    border-radius: 10px;
+    padding: 10px 12px;
+    min-height: 44px;
+  }
+  .sfield input:focus,
+  .sfield select:focus,
+  .sinput:focus {
+    outline: none;
+    border-color: var(--gold-500);
+  }
+  .muted {
+    color: var(--s-soft);
+  }
+  .mono {
+    font-family: var(--font-mono);
+  }
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    background: var(--s-hover);
+  }
+  .empty {
+    text-align: center;
+    color: var(--s-soft);
+    padding: 40px 10px;
+  }
+
+  .s-toast {
+    position: fixed;
+    left: 50%;
+    bottom: 24px;
+    translate: -50% 20px;
+    background: var(--maroon-900);
+    color: #fff;
+    padding: 12px 20px;
+    border-radius: 12px;
+    font-weight: 600;
+    opacity: 0;
+    transition: 0.3s var(--ease-out);
+    z-index: 100;
+    pointer-events: none;
+    max-width: calc(100% - 32px);
+  }
+  .s-toast[data-kind="err"] {
+    background: var(--red-600);
+  }
+  .s-toast.show {
+    opacity: 1;
+    translate: -50% 0;
+  }
+  [hidden] {
+    display: none !important;
+  }
+</style>

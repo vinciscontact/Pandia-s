@@ -1,0 +1,85 @@
+---
+import Base from "../layouts/Base.astro";
+import MenuBrowser from "../components/MenuBrowser.astro";
+import Icon from "../components/Icon.astro";
+---
+<Base title="Menu" description="The full Hotel Pandia's menu: mutton, chicken and fish biryani, kuska, parotta, chops, Chettinad soups, Chinese, shawarma and desserts.">
+  <section class="menu-hero">
+    <div class="wrap menu-hero__inner">
+      <div>
+        <p class="eyebrow">The menu</p>
+        <h1>Hungry? <em>Good.</em></h1>
+        <p class="lede">Everything we cook, from morning dosai to the last plate of biryani at night.</p>
+        <a class="btn btn--gold" href="/order"><Icon name="qr" /> At the restaurant? Order from your table</a>
+      </div>
+      <img src="/img/mascot-present.webp" alt="The biryani man presenting a tray of biryani" width="600" height="624" />
+    </div>
+  </section>
+  <div class="wrap menu-body">
+    <MenuBrowser />
+  </div>
+</Base>
+<style>
+  .menu-hero {
+    background:
+      radial-gradient(60% 80% at 80% 70%, rgb(246 213 142 / 0.7), transparent 70%),
+      var(--cream-100);
+    padding: calc(var(--nav-h) + 40px) 0 0;
+    overflow: hidden;
+  }
+  .menu-hero__inner {
+    display: grid;
+    grid-template-columns: 1.2fr 0.8fr;
+    align-items: end;
+    gap: 30px;
+  }
+  .menu-hero__inner > div {
+    padding-bottom: 60px;
+  }
+  h1 {
+    font-size: var(--step-5);
+    color: var(--maroon-900);
+    margin: 16px 0;
+  }
+  h1 em {
+    color: var(--red-600);
+  }
+  .lede {
+    font-size: var(--step-1);
+    color: var(--text-soft);
+    max-width: 30rem;
+    margin-bottom: 26px;
+  }
+  .menu-hero img {
+    width: min(100%, 380px);
+    justify-self: center;
+    margin-bottom: -6px;
+    animation: rise 1s var(--ease-out) both;
+  }
+  @keyframes rise {
+    from {
+      transform: translateY(60px);
+      opacity: 0;
+    }
+  }
+  .menu-body {
+    padding-bottom: 80px;
+  }
+  @media (max-width: 700px) {
+    .menu-hero__inner {
+      grid-template-columns: 1fr;
+    }
+    .menu-hero__inner > div {
+      padding-bottom: 0;
+    }
+    .menu-hero img {
+      width: 200px;
+      margin-top: -10px;
+    }
+    .menu-hero .btn {
+      white-space: normal;
+      text-align: left;
+      padding-block: 10px;
+    }
+  }
+</style>

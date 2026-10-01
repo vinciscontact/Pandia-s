@@ -1,0 +1,142 @@
+---
+import Icon from "./Icon.astro";
+import { site, branches, waLink } from "../data/site";
+const year = new Date().getFullYear();
+---
+<footer class="foot">
+  <svg class="foot__scallop" viewBox="0 0 1440 40" preserveAspectRatio="none" aria-hidden="true">
+    <path d="M0 40V20 Q30 0 60 20 T120 20 T180 20 T240 20 T300 20 T360 20 T420 20 T480 20 T540 20 T600 20 T660 20 T720 20 T780 20 T840 20 T900 20 T960 20 T1020 20 T1080 20 T1140 20 T1200 20 T1260 20 T1320 20 T1380 20 T1440 20 V40z" />
+  </svg>
+  <div class="wrap foot__grid">
+    <div class="foot__brand">
+      <img src="/img/logo.webp" alt="Hotel Pandia's" width="300" height="76" loading="lazy" />
+      <p>Golden biryani, soft parotta and the kuska North Madras grew up on.</p>
+      <p class="tamil foot__tamil">வாங்க, சாப்பிடலாம்!</p>
+    </div>
+    <div>
+      <h3>Visit</h3>
+      <ul>
+        {branches.map((b) => <li><a href={`/branches#${b.id}`}>{b.name}</a></li>)}
+      </ul>
+    </div>
+    <div>
+      <h3>Eat</h3>
+      <ul>
+        <li><a href="/menu">Full menu</a></li>
+        <li><a href="/order">Order at your table</a></li>
+        <li><a href="/branches#book">Book a table</a></li>
+        <li><a href="/branches#book">Catering & bulk orders</a></li>
+      </ul>
+    </div>
+    <div>
+      <h3>Talk to us</h3>
+      <ul>
+        <li><a href={`tel:${site.phone}`}><Icon name="phone" /> {site.phoneDisplay}</a></li>
+        <li><a href={waLink("Hi Pandia's! ")} target="_blank" rel="noopener"><Icon name="whatsapp" /> WhatsApp us</a></li>
+        <li><a href={site.social.zomato} target="_blank" rel="noopener"><Icon name="star" /> Rate us on Zomato</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="wrap foot__base">
+    <span>© {year} {site.name}, Chennai</span>
+    <span>Website & QR ordering by The Vincis · TableServe <a class="foot__magic" href="/chef" rel="nofollow" title="Staff sign in">Chef magic</a></span>
+  </div>
+</footer>
+
+<style>
+  /* the quiet way into the staff app: present, but easy to miss for guests */
+  .foot__magic {
+    margin-left: 10px;
+    padding: 2px 9px;
+    border: 1px solid color-mix(in oklab, var(--cream-50) 18%, transparent);
+    border-radius: 999px;
+    font-size: 0.72rem;
+    color: inherit;
+    opacity: 0.45;
+    text-decoration: none;
+    transition: opacity 0.2s, border-color 0.2s;
+  }
+  .foot__magic:hover,
+  .foot__magic:focus-visible {
+    opacity: 1;
+    border-color: var(--gold-500);
+    color: var(--gold-300);
+  }
+  .foot {
+    position: relative;
+    background: var(--maroon-950);
+    color: color-mix(in oklab, var(--cream-50) 82%, transparent);
+    padding: 72px 0 28px;
+    margin-top: 40px;
+  }
+  .foot__scallop {
+    position: absolute;
+    top: -39px;
+    left: 0;
+    width: 100%;
+    height: 40px;
+    fill: var(--maroon-950);
+  }
+  .foot__grid {
+    display: grid;
+    grid-template-columns: 1.6fr repeat(3, 1fr);
+    gap: 40px;
+  }
+  .foot__brand img {
+    width: min(300px, 80%);
+    margin-bottom: 18px;
+  }
+  .foot__tamil {
+    color: var(--gold-300);
+    margin-top: 10px;
+    font-size: 1.15rem;
+  }
+  h3 {
+    font-family: var(--font-mono);
+    font-size: 0.74rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--gold-500);
+    margin-bottom: 14px;
+    font-weight: 600;
+  }
+  ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 10px;
+  }
+  a {
+    text-decoration: none;
+    display: inline-flex;
+    gap: 8px;
+    align-items: center;
+  }
+  a:hover {
+    color: var(--gold-300);
+  }
+  a :global(svg) {
+    width: 17px;
+    height: 17px;
+  }
+  .foot__base {
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 56px;
+    padding-top: 20px;
+    border-top: 1px solid rgb(255 255 255 / 0.1);
+    font-size: var(--step--1);
+    opacity: 0.75;
+  }
+  @media (max-width: 820px) {
+    .foot__grid {
+      grid-template-columns: 1fr 1fr;
+    }
+    .foot__brand {
+      grid-column: 1 / -1;
+    }
+  }
+</style>

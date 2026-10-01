@@ -1,0 +1,119 @@
+---
+// Printable table QR codes for every branch (not linked from the site, not indexed).
+// Each code opens /order?branch=<id>&table=<n>. Print with Ctrl+P.
+import QRCode from "qrcode";
+import Base from "../layouts/Base.astro";
+import { branches } from "../data/site";
+const origin = Astro.site!.origin;
+const sets = await Promise.all(
+  branches.map(async (b) => ({
+    b,
+    codes: await Promise.all(
+      Array.from({ length: b.tables }, async (_, i) => {
+        const n = String(i + 1);
+        const url = `${origin}/order?branch=${b.id}&table=${n}`;
+        const svg = await QRCode.toString(url, { type: "svg", margin: 1, errorCorrectionLevel: "M", color: { dark: "#3a0a10", light: "#fff9ef" } });
+        return { n, url, svg };
+      })
+    ),
+  }))
+);
+---
+<Base title="Table QR codes" noindex bare>
+  <div class="wrap tq">
+    <header class="tq__head">
+      <h1>Table QR codes</h1>
+      <p>One card per table. Print this page (Ctrl+P), cut, and place each card on its table. Codes open <code>{origin}/order</code>, so set the real domain in <code>astro.config.mjs</code> before printing.</p>
+    </header>
+    {sets.map(({ b, codes }) => (
+      <section>
+        <h2>{b.name} <small>{codes.length} tables</small></h2>
+        <div class="tq__grid">
+          {codes.map((c) => (
+            <figure class="tq__card">
+              <img src="/img/logo.webp" alt="Hotel Pandia's" width="180" height="46" />
+              <div class="tq__qr" set:html={c.svg} />
+              <figcaption><b>Table {c.n}</b><span>Scan to order</span></figcaption>
+            </figure>
+          ))}
+        </div>
+      </section>
+    ))}
+  </div>
+</Base>
+<style>
+  .tq {
+    padding: calc(var(--nav-h) + 30px) 0 60px;
+  }
+  .tq__head {
+    max-width: 50rem;
+    margin-bottom: 30px;
+  }
+  h1 {
+    font-size: var(--step-3);
+    color: var(--maroon-900);
+  }
+  h2 {
+    margin: 40px 0 16px;
+    font-size: var(--step-2);
+    color: var(--maroon-900);
+  }
+  h2 small {
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    color: var(--text-soft);
+  }
+  .tq__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+    gap: 16px;
+  }
+  .tq__card {
+    margin: 0;
+    background: var(--cream-50);
+    border: 2px solid var(--red-600);
+    border-radius: 18px;
+    padding: 14px;
+    text-align: center;
+    break-inside: avoid;
+  }
+  .tq__card img {
+    width: 150px;
+    margin: 0 auto 8px;
+  }
+  .tq__qr :global(svg) {
+    width: 100%;
+    height: auto;
+  }
+  figcaption {
+    display: grid;
+    margin-top: 6px;
+  }
+  figcaption b {
+    font-family: var(--font-display);
+    font-size: 1.3rem;
+    color: var(--maroon-900);
+  }
+  figcaption span {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--red-700);
+  }
+  @media print {
+    :global(.nav),
+    .tq__head {
+      display: none !important;
+    }
+    .tq {
+      padding: 0;
+    }
+    section {
+      break-before: page;
+    }
+    .tq__grid {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+</style>

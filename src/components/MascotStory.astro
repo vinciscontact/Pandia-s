@@ -1,0 +1,723 @@
+---
+import Icon from "./Icon.astro";
+import { branches } from "../data/site";
+const chapters = ["Welcome", "The biryani", "The regulars", "Order"];
+---
+<section class="story" id="story" data-story data-chapter="0" aria-label="The Pandia's story">
+  <div class="stage" aria-hidden="true">
+    <div class="stage__bg">{chapters.map((_, i) => <i data-bg={i}></i>)}</div>
+    <div class="stage__word stage__word--a" data-word="-0.6">BIRYANI</div>
+    <div class="stage__word stage__word--b" data-word="0.5">KUSKA</div>
+    <div class="stage__spice">
+      {Array.from({ length: 14 }).map((_, i) => <span style={`--i:${i};--top:${(i * 37) % 88 + 4}%;--dx:${Math.round(Math.sin(i) * 30)}px`}><i></i></span>)}
+    </div>
+    <picture class="stage__poster" data-poster>
+      <source media="(max-width: 760px)" srcset="/img/mascot-480.webp" />
+      <img src="/img/mascot-900.webp" alt="" width="857" height="989" fetchpriority="high" />
+    </picture>
+    <canvas class="stage__canvas" data-canvas></canvas>
+  </div>
+
+  <div class="chapters">
+    <!-- 0 · hero -->
+    <article class="chapter chapter--hero" data-ch="0">
+      <div class="chapter__text">
+        <p class="eyebrow">Biryani house · Chennai</p>
+        <h1>Biryani, the<br /> <em>Pandia's</em> way.</h1>
+        <p class="lede">Golden rice, tender mutton and the kuska North Madras grew up on. Fresh off the dum, every single day.</p>
+        <div class="actions">
+          <a class="btn btn--gold" href="/order"><Icon name="qr" /> Order at your table</a>
+          <a class="btn btn--ghost" href="/menu">See the menu</a>
+          <span class="seal" aria-hidden="true">
+          <svg class="seal__ring" viewBox="0 0 200 200">
+            <defs><path id="sealPath" d="M100,100 m-78,0 a78,78 0 1,1 156,0 a78,78 0 1,1 -156,0" /></defs>
+            <text><textPath href="#sealPath">HOTEL PANDIA'S · DUM BIRYANI · CHENNAI · </textPath></text>
+          </svg>
+          <svg viewBox="0 0 200 200">
+            <circle cx="100" cy="100" r="96" />
+            <g class="seal__pot" transform="translate(100 104)">
+              <path d="M-30 -6 h60 a6 6 0 0 1 6 6 v6 a30 26 0 0 1-72 0 v-6 a6 6 0 0 1 6-6z" />
+              <rect x="-36" y="-14" width="72" height="9" rx="4.5" />
+              <path d="M-8 -26 q-6 -8 0 -16 M8 -26 q6 -8 0 -16 M0 -24 q-5 -9 0 -18" fill="none" stroke-width="3" stroke-linecap="round" />
+            </g>
+          </svg>
+          </span>
+        </div>
+        <p class="meta"><Icon name="map" /> {branches.length} kitchens across Chennai <span>·</span> <Icon name="clock" /> Open till 11 PM</p>
+      </div>
+      <a href="#ch1" class="scroll-cue"><span>Scroll</span><Icon name="arrow-down" /></a>
+    </article>
+
+    <!-- 1 · present -->
+    <article class="chapter chapter--right" data-ch="1" id="ch1">
+      <div class="chapter__text card">
+        <p class="eyebrow">01 · The biryani</p>
+        <h2>Gentle on masala. Big on mutton.</h2>
+        <p>Our biryani is golden, not fiery red. The spice stays in the background so every grain tastes of slow-cooked meat. Food writers have called it subtle and a little more golden than most. We take that as a compliment.</p>
+        <ul class="chips">
+          <li>Mutton</li><li>Chicken</li><li>Fish</li><li>Egg</li>
+        </ul>
+      </div>
+    </article>
+
+    <!-- 2 · OK -->
+    <article class="chapter chapter--left" data-ch="2">
+      <div class="chapter__text card card--dark">
+        <p class="eyebrow">02 · The regulars' order</p>
+        <h2>Kuska. Parotta. Mutton gravy. <em>Perfect.</em></h2>
+        <p>Ask a North Madras regular what to order and you'll hear the same three things. Biryani rice without the pieces, a soft flaky parotta, and a bowl of mutton gravy to bring them together.</p>
+        <p class="tip"><Icon name="flame" /> Start with the Chettinad chicken soup. It's peppery and worth it.</p>
+      </div>
+    </article>
+
+    <!-- 3 · QR -->
+    <article class="chapter chapter--right" data-ch="3">
+      <div class="chapter__text card card--red">
+        <p class="eyebrow">03 · At your table</p>
+        <h2>Scan. Order. Eat.</h2>
+        <p>Every table has its own QR code. Point your phone camera at it, pick your plates, and the order lands in our kitchen in seconds. No waving, no waiting for the menu card.</p>
+        <ol class="steps">
+          <li><b>1</b> Scan the table QR</li>
+          <li><b>2</b> Add your plates</li>
+          <li><b>3</b> We bring it hot</li>
+        </ol>
+        <a class="btn btn--gold" href="/order?branch=vadapalani&table=7">Try a demo order <Icon name="arrow" /></a>
+      </div>
+      <div class="qrcard" aria-hidden="true">
+        <div class="qrcard__code"><Icon name="qr" /><i class="qrcard__beam"></i></div>
+        <span>Table 7</span>
+      </div>
+    </article>
+  </div>
+
+  <nav class="dots" aria-label="Story chapters">
+    {chapters.map((c, i) => <span data-dot={i}><i></i><em>{c}</em></span>)}
+  </nav>
+</section>
+
+<style>
+  .story {
+    position: relative;
+    color: var(--ink);
+  }
+  .stage {
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    height: 100svh;
+    overflow: hidden;
+    isolation: isolate;
+  }
+  /* one pre-painted layer per chapter; switching chapters only fades opacity (GPU, no repaint) */
+  .stage__bg {
+    position: absolute;
+    inset: 0;
+    z-index: -3;
+    background: var(--cream-100);
+  }
+  .stage__bg i {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    transition: opacity 0.9s var(--ease-out);
+    will-change: opacity;
+    background:
+      radial-gradient(60% 55% at var(--gx) 58%, color-mix(in oklab, var(--glow) 85%, transparent), transparent 70%),
+      var(--stage);
+  }
+  .stage__bg [data-bg="0"] { --stage: var(--cream-100); --glow: #f8d995; --gx: 72%; }
+  .stage__bg [data-bg="1"] { --stage: #f9e3bf; --glow: #ffc26b; --gx: 30%; }
+  .stage__bg [data-bg="2"] { --stage: var(--maroon-900); --glow: #8a1a1e; --gx: 70%; }
+  .stage__bg [data-bg="3"] { --stage: var(--red-700); --glow: #e8434a; --gx: 30%; }
+  .story[data-chapter="0"] [data-bg="0"],
+  .story[data-chapter="1"] [data-bg="1"],
+  .story[data-chapter="2"] [data-bg="2"],
+  .story[data-chapter="3"] [data-bg="3"] {
+    opacity: 1;
+  }
+
+  .stage__word {
+    position: absolute;
+    z-index: -2;
+    font-family: var(--font-display);
+    font-weight: 800;
+    /* sized so BIRYANI exactly spans the content column; KUSKA shares the size */
+    --col: min(100vw - 2 * var(--gutter), var(--maxw));
+    --edge: calc((100vw - var(--col)) / 2);
+    font-size: calc(var(--col) / 4.4);
+    line-height: 0.8;
+    letter-spacing: -0.04em;
+    color: transparent;
+    -webkit-text-stroke: 2px color-mix(in oklab, var(--red-600) 22%, transparent);
+    white-space: nowrap;
+    pointer-events: none;
+    font-variation-settings: "SOFT" 100, "WONK" 1;
+    will-change: transform;
+  }
+  /* at rest: BIRYANI flush left, KUSKA flush right, on the content edges; they part as you scroll */
+  .stage__word--a {
+    top: calc(var(--nav-h) + 2vh);
+    left: var(--edge);
+    margin-left: -0.03em;
+  }
+  .stage__word--b {
+    bottom: 3vh;
+    right: var(--edge);
+    margin-right: -0.03em;
+    -webkit-text-stroke-color: color-mix(in oklab, var(--gold-500) 35%, transparent);
+  }
+  .story[data-chapter="2"] .stage__word,
+  .story[data-chapter="3"] .stage__word {
+    -webkit-text-stroke-color: rgb(255 255 255 / 0.1);
+  }
+
+  /* drifting cardamom / rice grains */
+  /* outer span: static placement and tilt; inner i: the drift, with variable-free keyframes
+     so it runs entirely on the compositor */
+  .stage__spice span {
+    position: absolute;
+    left: calc(var(--i) * 7.3% + 2%);
+    top: var(--top);
+    transform: translateX(var(--dx)) rotate(calc(var(--i) * 47deg));
+    z-index: -1;
+  }
+  .stage__spice i {
+    display: block;
+    width: 7px;
+    height: 17px;
+    border-radius: 50%;
+    background: var(--gold-500);
+    opacity: 0.35;
+    animation: drift calc(9s + var(--i) * 0.7s) ease-in-out calc(var(--i) * -1.3s) infinite alternate;
+    will-change: transform;
+  }
+  .stage__spice span:nth-child(3n) i {
+    background: #5b8f3a;
+    width: 10px;
+    height: 10px;
+    border-radius: 2px 60%;
+  }
+  .stage__spice span:nth-child(4n) i {
+    background: var(--cream-50);
+    width: 4px;
+    height: 13px;
+    opacity: 0.6;
+  }
+  @keyframes drift {
+    to {
+      transform: translateY(-60px) rotate(160deg);
+    }
+  }
+  /* nothing in the story animates while it is scrolled out of view */
+  .story:not(:global(.in-view)) :is(.stage__spice i, .seal__ring, .scroll-cue :global(svg), .qrcard *) {
+    animation-play-state: paused;
+  }
+
+  .seal {
+    flex: none;
+    position: relative;
+    width: 88px;
+    height: 88px;
+    margin-left: 10px;
+    pointer-events: none;
+  }
+  .seal svg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+  }
+  .seal__ring {
+    z-index: 1;
+    animation: spin 26s linear infinite;
+    will-change: transform;
+  }
+  .seal circle {
+    fill: var(--maroon-900);
+    stroke: var(--gold-500);
+    stroke-width: 3;
+  }
+  .seal text {
+    fill: var(--gold-300);
+    font-family: var(--font-mono);
+    font-weight: 600;
+    font-size: 15.5px;
+    letter-spacing: 3.2px;
+  }
+  .seal__pot {
+    fill: var(--gold-500);
+    stroke: var(--gold-300);
+  }
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  .stage__canvas,
+  .stage__poster {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+  }
+  .stage__canvas {
+    opacity: 0;
+    transition: opacity 0.6s;
+  }
+  .stage__canvas:global(.is-ready) {
+    opacity: 1;
+  }
+  .stage__poster {
+    display: grid;
+    place-items: end center;
+    padding-top: calc(var(--nav-h) + 4vh);
+    transition: opacity 0.5s;
+  }
+  .stage__poster img {
+    height: 80vh;
+    width: auto;
+    object-fit: contain;
+    translate: 24vw 0;
+    margin-bottom: 4vh;
+  }
+  .stage__poster:global(.is-hidden) {
+    opacity: 0;
+  }
+
+  /* ---------- chapters ---------- */
+  .chapters {
+    position: relative;
+    z-index: 2;
+    margin-top: -100vh;
+    margin-top: -100svh;
+  }
+  .chapter {
+    min-height: 100vh;
+    min-height: 100svh;
+    display: flex;
+    align-items: center;
+    width: min(100% - 2 * var(--gutter), var(--maxw));
+    margin-inline: auto;
+    padding: calc(var(--nav-h) + 24px) 0 40px;
+    position: relative;
+  }
+  .chapter__text {
+    max-width: 34rem;
+  }
+  .chapter--right {
+    justify-content: flex-end;
+  }
+  .chapter--hero .chapter__text {
+    max-width: 38rem;
+  }
+  .chapter--hero h1 {
+    font-size: clamp(2.8rem, 1.6rem + 4.4vw, 6rem);
+    line-height: 0.98;
+    letter-spacing: -0.02em;
+    margin: 16px 0 24px;
+    font-weight: 700;
+    color: var(--maroon-900);
+  }
+  h1 em,
+  h2 em {
+    font-style: italic;
+    color: var(--red-600);
+    font-variation-settings: "SOFT" 100, "WONK" 1;
+  }
+  .lede {
+    font-size: var(--step-1);
+    color: var(--text-soft);
+    max-width: 28rem;
+    text-wrap: pretty;
+  }
+  .actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+    margin-top: 32px;
+  }
+  .actions .btn--ghost {
+    color: var(--maroon-900);
+  }
+  .meta {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 28px;
+    font-size: var(--step--1);
+    color: var(--text-soft);
+  }
+  .meta > span {
+    opacity: 0.5;
+  }
+  .meta :global(svg) {
+    width: 16px;
+    height: 16px;
+    color: var(--red-600);
+  }
+  .scroll-cue {
+    position: absolute;
+    left: 0;
+    bottom: 28px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    text-decoration: none;
+    color: var(--text-soft);
+  }
+  .scroll-cue :global(svg) {
+    width: 18px;
+    animation: bob 1.8s ease-in-out infinite;
+  }
+  @keyframes bob {
+    50% {
+      transform: translateY(6px);
+    }
+  }
+
+  .card {
+    background: color-mix(in oklab, var(--cream-50) 94%, transparent);
+    padding: clamp(24px, 3.4vw, 44px);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-pop);
+    border: 1px solid rgb(255 255 255 / 0.5);
+  }
+  .card h2 {
+    font-size: var(--step-3);
+    margin: 14px 0 16px;
+    color: var(--maroon-900);
+  }
+  .card p + p {
+    margin-top: 12px;
+  }
+  .card--dark {
+    background: color-mix(in oklab, var(--maroon-950) 90%, transparent);
+    color: var(--cream-100);
+    border-color: rgb(255 255 255 / 0.08);
+  }
+  .card--dark h2 {
+    color: var(--cream-50);
+  }
+  .card--dark h2 em {
+    color: var(--gold-500);
+  }
+  .card--dark .eyebrow,
+  .card--red .eyebrow {
+    color: var(--gold-500);
+  }
+  .card--red {
+    background: color-mix(in oklab, var(--maroon-900) 88%, transparent);
+    color: var(--cream-100);
+    border-color: rgb(255 255 255 / 0.1);
+  }
+  .card--red h2 {
+    color: var(--cream-50);
+  }
+  .tip {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    color: var(--gold-300);
+    font-weight: 560;
+  }
+  .tip :global(svg) {
+    width: 20px;
+    flex: none;
+    margin-top: 3px;
+  }
+  .chips {
+    list-style: none;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 0;
+    margin: 22px 0 0;
+  }
+  .chips li {
+    padding: 6px 14px;
+    border-radius: 999px;
+    background: var(--maroon-900);
+    color: var(--gold-300);
+    font-size: 0.88rem;
+    font-weight: 600;
+  }
+  .steps {
+    list-style: none;
+    padding: 0;
+    margin: 22px 0 26px;
+    display: grid;
+    gap: 10px;
+  }
+  .steps li {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    font-weight: 560;
+  }
+  .steps b {
+    display: grid;
+    place-items: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--gold-500);
+    color: var(--maroon-900);
+    font-family: var(--font-mono);
+  }
+
+  /* the QR card that "scans" */
+  .qrcard {
+    position: absolute;
+    right: calc(var(--gutter) + min(36rem, 44vw));
+    top: 18vh;
+    width: 150px;
+    padding: 16px 16px 12px;
+    background: var(--cream-50);
+    border-radius: 18px;
+    box-shadow: var(--shadow-pop);
+    text-align: center;
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--maroon-900);
+    rotate: -8deg;
+  }
+  .qrcard__code {
+    position: relative;
+    overflow: hidden;
+    border-radius: 8px;
+  }
+  .qrcard__code :global(svg) {
+    width: 100%;
+    height: auto;
+    stroke-width: 1.4;
+    color: var(--maroon-900);
+  }
+  .qrcard__beam {
+    position: absolute;
+    inset: 0 0 auto;
+    height: 3px;
+    background: var(--red-500);
+    box-shadow: 0 0 14px 4px rgb(226 38 46 / 0.55);
+    animation: beam 1.8s ease-in-out infinite alternate;
+  }
+  @keyframes beam {
+    to {
+      transform: translateY(116px);
+    }
+  }
+
+  /* progress dots */
+  .dots {
+    position: fixed;
+    right: 18px;
+    top: 50%;
+    translate: 0 -50%;
+    display: grid;
+    gap: 12px;
+    z-index: 5;
+    opacity: 0;
+    transition: opacity 0.4s;
+    pointer-events: none;
+  }
+  .story.in-view .dots {
+    opacity: 1;
+  }
+  .dots span {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    justify-content: flex-end;
+  }
+  .dots i {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: currentColor;
+    opacity: 0.3;
+    transition: all 0.4s var(--ease-spring);
+  }
+  .dots em {
+    font-style: normal;
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    opacity: 0;
+    transition: opacity 0.3s;
+    order: -1;
+  }
+  .dots span.on i {
+    opacity: 1;
+    height: 26px;
+    border-radius: 6px;
+    background: var(--red-600);
+  }
+  .dots span.on em {
+    opacity: 0.8;
+  }
+  .story[data-chapter="2"] .dots,
+  .story[data-chapter="3"] .dots {
+    color: var(--cream-50);
+  }
+  .story[data-chapter="3"] .dots span.on i {
+    background: var(--gold-500);
+  }
+
+  /* text reveal per chapter */
+  :global(.js) .chapter__text > * {
+    opacity: 0;
+    transform: translateY(26px);
+    transition: opacity 0.8s var(--ease-out), transform 0.8s var(--ease-out);
+  }
+  :global(.js) .chapter.is-on .chapter__text > * {
+    opacity: 1;
+    transform: none;
+  }
+  :global(.js) .chapter.is-on .chapter__text > *:nth-child(2) { transition-delay: 0.08s; }
+  :global(.js) .chapter.is-on .chapter__text > *:nth-child(3) { transition-delay: 0.16s; }
+  :global(.js) .chapter.is-on .chapter__text > *:nth-child(4) { transition-delay: 0.24s; }
+  :global(.js) .chapter.is-on .chapter__text > *:nth-child(5) { transition-delay: 0.32s; }
+  :global(.js) .chapter__text.card {
+    opacity: 0;
+    transform: translateY(40px) scale(0.97);
+    transition: opacity 0.7s var(--ease-out), transform 0.9s var(--ease-out);
+  }
+  :global(.js) .chapter.is-on .chapter__text.card {
+    opacity: 1;
+    transform: none;
+  }
+
+  @media (max-width: 760px) {
+    .stage__poster img {
+      height: 52vh;
+      translate: 0 0;
+      margin-bottom: 0;
+    }
+    .stage__poster {
+      place-items: start center;
+      padding-top: calc(var(--nav-h) + 2vh);
+    }
+    .chapter {
+      align-items: flex-end;
+      padding-bottom: 28px;
+    }
+    .chapter--hero {
+      align-items: flex-end;
+    }
+    .chapter--hero .chapter__text {
+      background: linear-gradient(to top, var(--cream-100) 70%, transparent);
+      padding-top: 40px;
+      margin-inline: calc(var(--gutter) * -1);
+      padding-inline: var(--gutter);
+    }
+    .chapter--hero h1 {
+      font-size: clamp(2.5rem, 11vw, 3.4rem);
+      margin: 10px 0 12px;
+    }
+    .lede {
+      font-size: 1.02rem;
+    }
+    .actions {
+      margin-top: 18px;
+    }
+    .actions .btn {
+      flex: 1 1 auto;
+    }
+    .meta {
+      margin-top: 16px;
+    }
+    .scroll-cue {
+      display: none;
+    }
+    .seal {
+      display: none;
+    }
+    .card h2 {
+      font-size: 1.85rem;
+    }
+    .card {
+      padding: 22px;
+    }
+    .qrcard {
+      display: none;
+    }
+    .dots {
+      display: none;
+    }
+  }
+  @media (max-height: 640px) and (min-width: 761px) {
+    .chapter--hero h1 {
+      font-size: var(--step-4);
+    }
+  }
+</style>
+
+<script>
+  import { initMascotStage } from "../scripts/mascot-stage";
+  const story = document.querySelector<HTMLElement>("[data-story]")!;
+  const canvas = story.querySelector<HTMLCanvasElement>("[data-canvas]")!;
+  const poster = story.querySelector<HTMLElement>("[data-poster]");
+  const chapters = [...story.querySelectorAll<HTMLElement>("[data-ch]")];
+  const dots = [...story.querySelectorAll<HTMLElement>("[data-dot]")];
+
+  // which chapter is centered
+  const setChapter = (i: number) => {
+    story.dataset.chapter = String(i);
+    chapters.forEach((c, k) => c.classList.toggle("is-on", k === i));
+    dots.forEach((d, k) => d.classList.toggle("on", k === i));
+    const meta = document.querySelector('meta[name="theme-color"]');
+    meta?.setAttribute("content", ["#fbf1df", "#f9e3bf", "#3a0a10", "#a30f1a"][i]);
+  };
+  setChapter(0);
+  const io = new IntersectionObserver(
+    (entries) => {
+      for (const e of entries) if (e.isIntersecting) setChapter(Number((e.target as HTMLElement).dataset.ch));
+    },
+    { rootMargin: "-45% 0px -45% 0px" }
+  );
+  chapters.forEach((c) => io.observe(c));
+  new IntersectionObserver(([e]) => story.classList.toggle("in-view", e.isIntersecting), { threshold: 0.05 }).observe(story);
+
+  // Background words drift apart as you scroll. Geometry is measured once (not on every scroll)
+  // and only the two words' transforms are written, at most once per frame.
+  const words = [...story.querySelectorAll<HTMLElement>("[data-word]")];
+  let storyTop = 0;
+  let storyRange = 1;
+  let queued = false;
+  const measure = () => {
+    storyTop = story.getBoundingClientRect().top + scrollY;
+    storyRange = Math.max(1, story.offsetHeight - innerHeight);
+  };
+  const paintWords = () => {
+    queued = false;
+    const p = Math.min(1, Math.max(0, (scrollY - storyTop) / storyRange));
+    for (const w of words) w.style.transform = `translate3d(${(p * Number(w.dataset.word) * 100).toFixed(2)}vw,0,0)`;
+  };
+  const queueWords = () => {
+    if (!queued) (queued = true), requestAnimationFrame(paintWords);
+  };
+  measure();
+  paintWords();
+  addEventListener("scroll", queueWords, { passive: true });
+  addEventListener("resize", () => (measure(), queueWords()), { passive: true });
+
+  // Poster follows the chapter side until 3D is ready
+  const start = () =>
+    initMascotStage({ story, canvas, poster, model: "/models/pandia-mascot.glb" }).catch((err) =>
+      console.warn("[mascot] staying on poster:", err)
+    );
+  const conn = (navigator as any).connection;
+  if (conn?.saveData) {
+    /* respect data saver: keep the still image */
+  } else if ("requestIdleCallback" in window) {
+    (window as any).requestIdleCallback(start, { timeout: 600 });
+  } else setTimeout(start, 200);
+</script>

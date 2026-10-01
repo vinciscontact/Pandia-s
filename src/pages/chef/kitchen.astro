@@ -1,0 +1,368 @@
+---
+import Staff from "../../layouts/Staff.astro";
+import Icon from "../../components/Icon.astro";
+---
+<Staff title="Kitchen" dark>
+  <div class="kds">
+    <div class="shead">
+      <h1>Kitchen <span class="muted kds__clock" data-clock></span></h1>
+      <span class="grow"></span>
+      <span class="live" data-live><i></i> Live</span>
+      <button type="button" class="sbtn" data-sound><Icon name="volume" /> <span>Turn on sound</span></button>
+    </div>
+
+    <div class="kds__cols">
+      {[
+        { k: "received", t: "New", hint: "Tap Start when you begin cooking" },
+        { k: "preparing", t: "Cooking", hint: "Tap Ready when it's on the pass" },
+        { k: "ready", t: "Ready to serve", hint: "Tap Served once it's at the table" },
+      ].map((c) => (
+        <section class={`kcol kcol--${c.k}`} aria-labelledby={`kc-${c.k}`}>
+          <header>
+            <h2 id={`kc-${c.k}`}>{c.t}</h2>
+            <b data-count={c.k}>0</b>
+          </header>
+          <div class="kcol__list" data-col={c.k}>
+            <p class="empty">{c.hint}</p>
+          </div>
+        </section>
+      ))}
+    </div>
+  </div>
+</Staff>
+
+<style>
+  .kds__clock {
+    font-family: var(--font-mono);
+    font-size: 1rem;
+    margin-left: 8px;
+  }
+  .live {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 700;
+    font-size: 0.85rem;
+    color: #8fe39b;
+  }
+  .live i {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: currentColor;
+    animation: blink 1.6s ease-in-out infinite;
+  }
+  .live.is-off {
+    color: var(--gold-500);
+  }
+  @keyframes blink {
+    50% {
+      opacity: 0.3;
+    }
+  }
+  .kds__cols {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+    align-items: start;
+  }
+  @media (max-width: 1000px) {
+    .kds__cols {
+      grid-template-columns: 1fr;
+    }
+  }
+  .kcol {
+    background: rgb(255 255 255 / 0.03);
+    border: 1px solid var(--s-line);
+    border-radius: 20px;
+    padding: 12px;
+    min-height: 60vh;
+  }
+  .kcol header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 4px 6px 12px;
+  }
+  .kcol h2 {
+    font-size: 1.3rem;
+    margin: 0;
+  }
+  .kcol header b {
+    font-family: var(--font-mono);
+    font-size: 1.1rem;
+    min-width: 36px;
+    height: 36px;
+    display: grid;
+    place-items: center;
+    border-radius: 10px;
+    background: var(--s-hover);
+  }
+  .kcol--received header b {
+    background: var(--red-600);
+    color: #fff;
+  }
+  .kcol--ready header b {
+    background: var(--leaf);
+    color: #fff;
+  }
+  .kcol__list {
+    display: grid;
+    gap: 12px;
+  }
+
+  /* ticket */
+  .kcol__list :global(.tk) {
+    background: var(--s-card);
+    border-radius: 16px;
+    padding: 14px 16px 16px;
+    border-left: 6px solid var(--gold-500);
+    animation: tkIn 0.5s var(--ease-spring);
+  }
+  .kcol--received :global(.tk) {
+    border-left-color: var(--red-500);
+  }
+  .kcol--ready :global(.tk) {
+    border-left-color: var(--leaf);
+  }
+  .kcol__list :global(.tk.is-new) {
+    box-shadow: 0 0 0 3px var(--gold-500);
+  }
+  @keyframes tkIn {
+    from {
+      transform: translateY(-14px) scale(0.97);
+      opacity: 0;
+    }
+  }
+  .kcol__list :global(.tk__top) {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+  }
+  .kcol__list :global(.tk__table) {
+    font-family: var(--font-display);
+    font-size: 2.1rem;
+    font-weight: 800;
+    line-height: 1;
+  }
+  .kcol__list :global(.tk__code) {
+    font-family: var(--font-mono);
+    color: var(--s-soft);
+  }
+  .kcol__list :global(.tk__age) {
+    margin-left: auto;
+    font-family: var(--font-mono);
+    font-weight: 700;
+    font-size: 1.05rem;
+    padding: 2px 10px;
+    border-radius: 8px;
+    background: var(--s-hover);
+  }
+  .kcol__list :global(.tk__age.warn) {
+    background: var(--gold-500);
+    color: var(--maroon-900);
+  }
+  .kcol__list :global(.tk__age.late) {
+    background: var(--red-600);
+    color: #fff;
+    animation: blink 1s ease-in-out infinite;
+  }
+  .kcol__list :global(.tk ul) {
+    list-style: none;
+    padding: 0;
+    margin: 12px 0;
+    display: grid;
+    gap: 6px;
+    font-size: 1.12rem;
+    font-weight: 600;
+  }
+  .kcol__list :global(.tk li b) {
+    display: inline-block;
+    min-width: 34px;
+    font-family: var(--font-mono);
+    color: var(--gold-500);
+  }
+  .kcol__list :global(.tk__note) {
+    background: color-mix(in oklab, var(--gold-500) 22%, transparent);
+    border-radius: 10px;
+    padding: 8px 12px;
+    font-weight: 600;
+    margin-bottom: 12px;
+  }
+  .kcol__list :global(.tk__actions) {
+    display: flex;
+    gap: 8px;
+  }
+  .kcol__list :global(.tk__go) {
+    flex: 1;
+    min-height: 54px;
+    font-size: 1.05rem;
+  }
+</style>
+
+<script>
+  import { initStaffPage, sb, esc, minsSince, sound, act, toast } from "../../lib/staff";
+
+  type Ticket = {
+    id: string;
+    code: string;
+    table_label: string;
+    status: "received" | "preparing" | "ready";
+    note: string | null;
+    created_at: string;
+    order_items: { name: string; qty: number }[];
+  };
+
+  const page = await initStaffPage(["kitchen", "manager", "admin"]);
+  const tickets = new Map<string, Ticket>();
+  const NEXT: Record<Ticket["status"], { to: string; label: string; cls: string }> = {
+    received: { to: "preparing", label: "Start cooking", cls: "sbtn--gold" },
+    preparing: { to: "ready", label: "Ready", cls: "sbtn--green" },
+    ready: { to: "served", label: "Served", cls: "sbtn--primary" },
+  };
+  const PREV: Partial<Record<Ticket["status"], string>> = { preparing: "received", ready: "preparing" };
+
+  // ---------- clock + ticket ages
+  const clock = document.querySelector<HTMLElement>("[data-clock]")!;
+  const tickClock = () => (clock.textContent = new Date().toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit" }));
+  tickClock();
+  setInterval(() => {
+    tickClock();
+    document.querySelectorAll<HTMLElement>("[data-age]").forEach((el) => paintAge(el, el.dataset.age!));
+  }, 15000);
+  function paintAge(el: HTMLElement, iso: string) {
+    const m = minsSince(iso);
+    el.textContent = m < 1 ? "now" : `${m}m`;
+    el.className = "tk__age" + (m >= 20 ? " late" : m >= 10 ? " warn" : "");
+  }
+
+  // ---------- render
+  function render() {
+    for (const col of ["received", "preparing", "ready"] as const) {
+      const list = document.querySelector<HTMLElement>(`[data-col="${col}"]`)!;
+      const items = [...tickets.values()].filter((t) => t.status === col).sort((a, b) => a.created_at.localeCompare(b.created_at));
+      document.querySelector(`[data-count="${col}"]`)!.textContent = String(items.length);
+      const keep = new Set(items.map((t) => t.id));
+      list.querySelectorAll<HTMLElement>(".tk").forEach((el) => !keep.has(el.dataset.id!) && el.remove());
+      list.querySelector(".empty")!.toggleAttribute("hidden", items.length > 0);
+      items.forEach((t, i) => {
+        let el = list.querySelector<HTMLElement>(`.tk[data-id="${t.id}"]`);
+        if (!el) {
+          el = document.createElement("article");
+          el.className = "tk";
+          el.dataset.id = t.id;
+          el.innerHTML = ticketHtml(t);
+          wire(el, t.id);
+        }
+        if (list.children[i + 1] !== el) list.insertBefore(el, list.children[i + 1] || null);
+        paintAge(el.querySelector("[data-age]")!, t.created_at);
+      });
+    }
+  }
+  const ticketHtml = (t: Ticket) => `
+    <div class="tk__top">
+      <span class="tk__table">T${esc(t.table_label)}</span>
+      <span class="tk__code">#${esc(t.code)}</span>
+      <span class="tk__age" data-age="${t.created_at}"></span>
+    </div>
+    <ul>${(t.order_items || []).map((i) => `<li><b>${i.qty}×</b> ${esc(i.name)}</li>`).join("")}</ul>
+    ${t.note ? `<p class="tk__note">“${esc(t.note)}”</p>` : ""}
+    <div class="tk__actions">
+      ${PREV[t.status] ? `<button type="button" class="sbtn" data-back title="Move back" aria-label="Move back">↶</button>` : ""}
+      <button type="button" class="sbtn ${NEXT[t.status].cls} tk__go" data-next>${NEXT[t.status].label}</button>
+    </div>`;
+
+  function wire(el: HTMLElement, id: string) {
+    el.querySelector<HTMLButtonElement>("[data-next]")!.addEventListener("click", (e) => move(id, "next", e.currentTarget as HTMLButtonElement));
+    el.querySelector<HTMLButtonElement>("[data-back]")?.addEventListener("click", (e) => move(id, "back", e.currentTarget as HTMLButtonElement));
+  }
+
+  async function move(id: string, dir: "next" | "back", btn: HTMLButtonElement) {
+    const t = tickets.get(id);
+    if (!t) return;
+    const to = dir === "next" ? NEXT[t.status].to : PREV[t.status]!;
+    const ok = await act(btn, async () => {
+      const { error } = await sb().rpc("set_order_status", { p_order: id, p_status: to });
+      if (error) throw error;
+      return true;
+    });
+    if (!ok) return;
+    if (to === "served") tickets.delete(id);
+    else {
+      t.status = to as Ticket["status"];
+      // status changed: rebuild this ticket so its button matches the new column
+      document.querySelector(`.tk[data-id="${id}"]`)?.remove();
+    }
+    render();
+  }
+
+  // ---------- data
+  const SELECT = "id, code, table_label, status, note, created_at, order_items(name, qty)";
+  async function loadAll() {
+    const { data, error } = await sb()
+      .from("orders")
+      .select(SELECT)
+      .eq("branch_id", page.branch)
+      .in("status", ["received", "preparing", "ready"])
+      .order("created_at");
+    if (error) return toast("Couldn't load orders. Retrying…", "err");
+    tickets.clear();
+    document.querySelectorAll(".tk").forEach((el) => el.remove());
+    (data as Ticket[]).forEach((t) => tickets.set(t.id, t));
+    render();
+  }
+
+  let channel: ReturnType<ReturnType<typeof sb>["channel"]> | null = null;
+  const liveEl = document.querySelector<HTMLElement>("[data-live]")!;
+  function subscribe() {
+    channel?.unsubscribe();
+    channel = sb()
+      .channel("kds-" + page.branch)
+      .on("postgres_changes", { event: "*", schema: "public", table: "orders", filter: `branch_id=eq.${page.branch}` }, async (p) => {
+        const row = p.new as Ticket;
+        if (p.eventType === "INSERT") {
+          // items are written in the same transaction; fetch the full ticket
+          const { data } = await sb().from("orders").select(SELECT).eq("id", row.id).single();
+          if (!data) return;
+          tickets.set(row.id, data as Ticket);
+          render();
+          const el = document.querySelector<HTMLElement>(`.tk[data-id="${row.id}"]`);
+          el?.classList.add("is-new");
+          setTimeout(() => el?.classList.remove("is-new"), 8000);
+          sound.chime(2);
+          navigator.vibrate?.([120, 60, 120]);
+        } else if (p.eventType === "UPDATE") {
+          const t = tickets.get(row.id);
+          if (!["received", "preparing", "ready"].includes(row.status)) tickets.delete(row.id);
+          else if (t && t.status !== row.status) {
+            t.status = row.status;
+            document.querySelector(`.tk[data-id="${row.id}"]`)?.remove();
+          } else if (!t) return loadAll();
+          render();
+        }
+      })
+      .subscribe((s) => {
+        liveEl.classList.toggle("is-off", s !== "SUBSCRIBED");
+        liveEl.lastChild!.textContent = s === "SUBSCRIBED" ? " Live" : " Reconnecting…";
+        if (s === "SUBSCRIBED") loadAll(); // catch anything missed while offline
+      });
+  }
+
+  // sound needs one tap (browser rule)
+  const soundBtn = document.querySelector<HTMLButtonElement>("[data-sound]")!;
+  soundBtn.addEventListener("click", async () => {
+    await sound.enable();
+    sound.chime();
+    soundBtn.querySelector("span")!.textContent = "Sound on";
+    soundBtn.classList.add("sbtn--green");
+  });
+
+  page.onBranchChange(() => {
+    loadAll();
+    subscribe();
+  });
+  subscribe();
+  // safety net: full refresh every 2 minutes and when the tablet wakes up
+  setInterval(loadAll, 120000);
+  document.addEventListener("visibilitychange", () => !document.hidden && loadAll());
+</script>

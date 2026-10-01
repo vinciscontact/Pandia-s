@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /tables
+Disallow: /order
+Disallow: /chef
+Sitemap: https://hotelpandias.com/sitemap-index.xml

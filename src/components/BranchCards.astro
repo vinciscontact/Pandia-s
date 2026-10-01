@@ -1,0 +1,138 @@
+---
+import Icon from "./Icon.astro";
+import { branches, mapsUrl } from "../data/site";
+interface Props { compact?: boolean }
+const { compact = false } = Astro.props;
+---
+<div class={`branches ${compact ? "branches--compact" : ""}`}>
+  {branches.map((b, i) => (
+    <article class="branch" id={b.id} data-reveal style={`--d:${i * 0.07}s`}>
+      <div class="branch__top">
+        <span class="branch__no">{String(i + 1).padStart(2, "0")}</span>
+        {b.rating && <span class="branch__rating"><Icon name="star" /> {b.rating.value.toFixed(1)}</span>}
+      </div>
+      <h3>{b.name}</h3>
+      <p class="branch__addr">{b.address}</p>
+      {b.landmark && <p class="branch__land">{b.landmark}</p>}
+      <ul class="branch__facts">
+        <li><Icon name="clock" /> {b.hours ?? "Call for timings"}</li>
+        {b.phoneDisplay && <li><Icon name="phone" /> <a href={`tel:${b.phone}`}>{b.phoneDisplay}</a></li>}
+      </ul>
+      <div class="branch__actions">
+        <a class="btn btn--dark" href={mapsUrl(b)} target="_blank" rel="noopener"><Icon name="map" /> Directions</a>
+        {b.phone && <a class="btn btn--ghost" href={`tel:${b.phone}`}><Icon name="phone" /> Call</a>}
+      </div>
+    </article>
+  ))}
+</div>
+<style>
+  .branches {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 18px;
+  }
+  .branch {
+    background: var(--surface);
+    border-radius: var(--radius);
+    padding: 24px;
+    box-shadow: var(--shadow-soft);
+    display: flex;
+    flex-direction: column;
+    border-top: 5px solid var(--red-600);
+  }
+  .branch__top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .branch__no {
+    font-family: var(--font-mono);
+    font-weight: 600;
+    color: var(--red-600);
+  }
+  .branch__rating {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-family: var(--font-mono);
+    font-weight: 600;
+    font-size: 0.85rem;
+    background: var(--cream-200);
+    padding: 3px 10px;
+    border-radius: 999px;
+  }
+  .branch__rating :global(svg) {
+    width: 13px;
+    color: var(--gold-600);
+  }
+  h3 {
+    font-size: var(--step-2);
+    margin: 14px 0 8px;
+    color: var(--maroon-900);
+  }
+  .branch__addr {
+    color: var(--text);
+  }
+  .branch__land {
+    color: var(--text-soft);
+    font-size: 0.9rem;
+    margin-top: 4px;
+  }
+  .branch__facts {
+    list-style: none;
+    padding: 0;
+    margin: 16px 0 20px;
+    display: grid;
+    gap: 6px;
+    font-size: 0.93rem;
+  }
+  .branch__facts li {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+  .branch__facts :global(svg) {
+    width: 16px;
+    color: var(--red-600);
+  }
+  .branch__facts a {
+    text-decoration: none;
+  }
+  .branch__actions {
+    margin-top: auto;
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .branch__actions .btn {
+    min-height: 42px;
+    font-size: 0.9rem;
+    padding: 0 1em;
+  }
+  .branch__actions .btn--ghost {
+    color: var(--maroon-900);
+  }
+  @media (max-width: 1100px) {
+    .branches {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+  @media (max-width: 600px) {
+    .branches--compact {
+      grid-auto-flow: column;
+      grid-template-columns: none;
+      grid-auto-columns: 82%;
+      overflow-x: auto;
+      scroll-snap-type: x mandatory;
+      margin-inline: calc(var(--gutter) * -1);
+      padding: 4px var(--gutter) 16px;
+      scrollbar-width: none;
+    }
+    .branches--compact .branch {
+      scroll-snap-align: center;
+    }
+    .branches:not(.branches--compact) {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

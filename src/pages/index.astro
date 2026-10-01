@@ -1,0 +1,28 @@
+---
+import Base from "../layouts/Base.astro";
+import MascotStory from "../components/MascotStory.astro";
+import Signatures from "../components/Signatures.astro";
+import MenuTeaser from "../components/MenuTeaser.astro";
+import Reviews from "../components/Reviews.astro";
+import SectionHead from "../components/SectionHead.astro";
+import BranchCards from "../components/BranchCards.astro";
+import CateringCTA from "../components/CateringCTA.astro";
+---
+<Base>
+  <MascotStory />
+  <Signatures />
+  <MenuTeaser />
+  <Reviews />
+  <section class="home-branches">
+    <div class="wrap">
+      <SectionHead eyebrow="Find us" title="Four kitchens. <em>One biryani.</em>" intro="Pick the one closest to you. The rice tastes the same at all of them." />
+      <BranchCards compact />
+    </div>
+  </section>
+  <CateringCTA />
+</Base>
+<style>
+  .home-branches {
+    padding: clamp(80px, 11vw, 140px) 0 clamp(30px, 4vw, 50px);
+  }
+</style>

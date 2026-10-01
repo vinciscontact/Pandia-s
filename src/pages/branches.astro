@@ -1,0 +1,211 @@
+---
+import Base from "../layouts/Base.astro";
+import SectionHead from "../components/SectionHead.astro";
+import BranchCards from "../components/BranchCards.astro";
+import Icon from "../components/Icon.astro";
+import { branches, site } from "../data/site";
+---
+<Base title="Branches, booking & catering" description="Find Hotel Pandia's in Vadapalani, Washermenpet, Royapuram and Kottivakkam. Book a table or ask for a catering quote on WhatsApp.">
+  <section class="page-hero">
+    <div class="wrap">
+      <p class="eyebrow">Branches</p>
+      <h1>Come hungry. <em>We're close by.</em></h1>
+      <p class="lede">Four Hotel Pandia's kitchens across Chennai, from North Madras to Arcot Road.</p>
+    </div>
+  </section>
+
+  <section class="wrap list">
+    <BranchCards />
+  </section>
+
+  <section class="book" id="book">
+    <div class="wrap book__grid">
+      <div>
+        <SectionHead eyebrow="Book & catering" title="Save a table. <em>Or feed a crowd.</em>" intro="Send us the details and we'll confirm on WhatsApp. For anything urgent, just call." />
+        <p class="book__call"><Icon name="phone" /> <a href={`tel:${site.phone}`}>{site.phoneDisplay}</a></p>
+        <img src="/img/mascot-present.webp" alt="" width="600" height="624" class="book__art" loading="lazy" />
+      </div>
+      <form class="book__form" data-book data-reveal>
+        <fieldset class="book__type">
+          <legend class="sr-only">What do you need?</legend>
+          <label><input type="radio" name="type" value="Table booking" checked /> <span>Book a table</span></label>
+          <label><input type="radio" name="type" value="Catering / bulk order" /> <span>Catering & bulk order</span></label>
+        </fieldset>
+        <label>Your name <input name="name" required autocomplete="name" /></label>
+        <div class="row">
+          <label>Branch
+            <select name="branch">{branches.map((b) => <option>{b.name}</option>)}</select>
+          </label>
+          <label>People <input name="people" type="number" min="1" max="2000" value="4" required /></label>
+        </div>
+        <div class="row">
+          <label>Date <input name="date" type="date" required /></label>
+          <label>Time <input name="time" type="time" value="20:00" /></label>
+        </div>
+        <label>Anything else? <textarea name="notes" rows="3" placeholder="Birthday, high chair, dishes for catering…"></textarea></label>
+        <button class="btn" type="submit"><Icon name="whatsapp" /> Send on WhatsApp</button>
+        <p class="fine">This opens WhatsApp with your details filled in. Nothing is sent until you press send there.</p>
+      </form>
+    </div>
+  </section>
+</Base>
+<style>
+  .page-hero {
+    padding: calc(var(--nav-h) + 56px) 0 40px;
+    background: radial-gradient(50% 90% at 85% 30%, rgb(246 213 142 / 0.7), transparent 70%);
+  }
+  h1 {
+    font-size: var(--step-5);
+    color: var(--maroon-900);
+    margin: 16px 0;
+    max-width: 14ch;
+  }
+  h1 em {
+    color: var(--red-600);
+  }
+  .lede {
+    font-size: var(--step-1);
+    color: var(--text-soft);
+    max-width: 34rem;
+  }
+  .list {
+    padding-bottom: 80px;
+  }
+  .book {
+    background: var(--cream-50);
+    border-top: 1px solid var(--line);
+    padding: clamp(60px, 9vw, 120px) 0;
+  }
+  .book__grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: clamp(30px, 6vw, 80px);
+    align-items: start;
+  }
+  .book__grid > * {
+    min-width: 0;
+  }
+  .book__call {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    font-size: var(--step-1);
+    font-weight: 650;
+  }
+  .book__call :global(svg) {
+    width: 22px;
+    color: var(--red-600);
+  }
+  .book__call a {
+    text-decoration: none;
+  }
+  .book__art {
+    width: min(320px, 70%);
+    margin-top: 30px;
+  }
+  .book__form {
+    background: var(--surface);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-pop);
+    padding: clamp(22px, 3.5vw, 40px);
+    display: grid;
+    gap: 16px;
+  }
+  .book__type {
+    border: 0;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .book__type label {
+    position: relative;
+  }
+  .book__type input {
+    position: absolute;
+    opacity: 0;
+  }
+  .book__type span {
+    display: grid;
+    place-items: center;
+    text-align: center;
+    min-height: 52px;
+    padding: 8px;
+    border-radius: var(--radius-sm);
+    border: 1.5px solid var(--line);
+    font-weight: 650;
+    transition: all 0.25s;
+  }
+  .book__type input:checked + span {
+    background: var(--maroon-900);
+    color: var(--gold-300);
+    border-color: var(--maroon-900);
+  }
+  .book__type input:focus-visible + span {
+    outline: 3px solid var(--gold-500);
+  }
+  label {
+    display: grid;
+    gap: 6px;
+    font-weight: 600;
+    font-size: 0.92rem;
+  }
+  .row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 12px;
+  }
+  input,
+  select,
+  textarea {
+    border: 1.5px solid var(--line);
+    background: var(--cream-50);
+    border-radius: var(--radius-sm);
+    padding: 12px 14px;
+    font-size: 1rem;
+    font-weight: 500;
+    width: 100%;
+  }
+  input:focus,
+  select:focus,
+  textarea:focus {
+    outline: none;
+    border-color: var(--gold-500);
+  }
+  .fine {
+    font-size: 0.82rem;
+    color: var(--text-soft);
+  }
+  @media (max-width: 820px) {
+    .book__grid {
+      grid-template-columns: 1fr;
+    }
+    .book__art {
+      display: none;
+    }
+  }
+</style>
+<script>
+  import { waLink } from "../data/site";
+  const form = document.querySelector<HTMLFormElement>("[data-book]")!;
+  const date = form.querySelector<HTMLInputElement>("input[name=date]")!;
+  const today = new Date();
+  date.min = today.toISOString().slice(0, 10);
+  date.value = date.min;
+  form.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const f = new FormData(form);
+    const msg = [
+      `Hi Hotel Pandia's! ${f.get("type")} request:`,
+      `Name: ${f.get("name")}`,
+      `Branch: ${f.get("branch")}`,
+      `People: ${f.get("people")}`,
+      `Date: ${f.get("date")} ${f.get("time") || ""}`,
+      f.get("notes") ? `Notes: ${f.get("notes")}` : "",
+    ]
+      .filter(Boolean)
+      .join("\n");
+    window.open(waLink(msg), "_blank", "noopener");
+  });
+</script>

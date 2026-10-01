@@ -1,0 +1,215 @@
+---
+import Icon from "./Icon.astro";
+const links = [
+  { href: "/menu", label: "Menu" },
+  { href: "/#story", label: "Our biryani" },
+  { href: "/branches", label: "Branches" },
+  { href: "/branches#book", label: "Book & catering" },
+];
+const path = Astro.url.pathname;
+---
+<header class="nav" data-nav>
+  <div class="nav__inner wrap">
+    <a href="/" class="nav__brand" aria-label="Hotel Pandia's home">
+      <img src="/img/logo-emblem.webp" alt="" width="64" height="42" />
+      <img class="nav__word" src="/img/logo-wordmark.webp" alt="Hotel Pandia's" width="124" height="35" />
+    </a>
+    <nav class="nav__links" aria-label="Main">
+      {links.map((l) => (
+        <a href={l.href} aria-current={path === l.href ? "page" : undefined}>{l.label}</a>
+      ))}
+    </nav>
+    <div class="nav__cta">
+      <a class="btn nav__order" href="/order"><Icon name="qr" /> <span>Order at table</span></a>
+      <button class="nav__burger" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="drawer" data-burger>
+        <Icon name="menu" />
+      </button>
+    </div>
+  </div>
+  <div class="drawer" id="drawer" data-drawer hidden>
+    <nav aria-label="Mobile">
+      {links.map((l, i) => <a href={l.href} style={`--i:${i}`}>{l.label}<Icon name="arrow" /></a>)}
+      <a href="/order" class="drawer__order" style={`--i:${links.length}`}>Order at your table<Icon name="qr" /></a>
+    </nav>
+    <p class="drawer__tamil tamil">வாங்க, சாப்பிடலாம்!</p>
+  </div>
+</header>
+
+<style>
+  .nav {
+    position: fixed;
+    inset: 0 0 auto 0;
+    z-index: 50;
+    height: var(--nav-h);
+    transition: background 0.4s, box-shadow 0.4s, transform 0.5s var(--ease-out);
+  }
+  .nav.is-solid {
+    /* near-opaque instead of backdrop blur: a blurred fixed bar is re-blurred on every scroll frame */
+    background: color-mix(in oklab, var(--cream-50) 96%, transparent);
+    box-shadow: 0 1px 0 var(--line);
+  }
+  .nav.is-hidden {
+    transform: translateY(-100%);
+  }
+  .nav__inner {
+    height: 100%;
+    display: flex;
+    align-items: center;
+    gap: 24px;
+  }
+  .nav__brand {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    text-decoration: none;
+    margin-right: auto;
+  }
+  .nav__brand img:first-child {
+    width: 58px;
+    height: auto;
+    filter: drop-shadow(0 4px 8px rgb(58 10 16 / 0.25));
+  }
+  .nav__word {
+    width: 118px;
+    height: auto;
+  }
+  .nav__links {
+    display: flex;
+    gap: 6px;
+  }
+  .nav__links a {
+    text-decoration: none;
+    font-weight: 560;
+    padding: 8px 14px;
+    border-radius: 999px;
+    transition: background 0.25s;
+  }
+  .nav__links a:hover,
+  .nav__links a[aria-current] {
+    background: color-mix(in oklab, var(--red-600) 10%, transparent);
+  }
+  .nav__cta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .nav__order {
+    min-height: 44px;
+    font-size: 0.95rem;
+  }
+  .nav__burger {
+    display: none;
+    width: 46px;
+    height: 46px;
+    border-radius: 50%;
+    border: 0;
+    background: var(--maroon-900);
+    color: var(--cream-50);
+    place-items: center;
+  }
+  .nav__burger :global(svg) {
+    width: 22px;
+    height: 22px;
+  }
+  .drawer {
+    position: fixed;
+    inset: var(--nav-h) 0 0 0;
+    background: var(--maroon-900);
+    color: var(--cream-50);
+    padding: 24px var(--gutter) 40px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    overflow: auto;
+  }
+  .drawer nav {
+    display: flex;
+    flex-direction: column;
+  }
+  .drawer a {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: var(--font-display);
+    font-size: clamp(2rem, 8vw, 2.8rem);
+    text-decoration: none;
+    padding: 14px 0;
+    border-bottom: 1px solid rgb(255 255 255 / 0.12);
+    opacity: 0;
+    transform: translateY(16px);
+    animation: drawerIn 0.6s var(--ease-out) forwards;
+    animation-delay: calc(var(--i) * 60ms + 80ms);
+  }
+  .drawer a :global(svg) {
+    width: 28px;
+    height: 28px;
+    color: var(--gold-500);
+  }
+  .drawer[hidden] {
+    display: none;
+  }
+  .drawer__order {
+    color: var(--gold-300);
+  }
+  .drawer__tamil {
+    font-size: 1.4rem;
+    color: var(--gold-300);
+    opacity: 0.8;
+  }
+  @keyframes drawerIn {
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+  @media (max-width: 900px) {
+    .nav__links {
+      display: none;
+    }
+    .nav__burger {
+      display: grid;
+    }
+  }
+  @media (max-width: 520px) {
+    .nav__order span {
+      display: none;
+    }
+    .nav__order {
+      width: 46px;
+      padding: 0;
+    }
+    .nav__word {
+      width: 100px;
+    }
+  }
+</style>
+
+<script>
+  const nav = document.querySelector<HTMLElement>("[data-nav]")!;
+  const burger = document.querySelector<HTMLButtonElement>("[data-burger]")!;
+  const drawer = document.querySelector<HTMLElement>("[data-drawer]")!;
+  let last = scrollY;
+  const onScroll = () => {
+    const y = scrollY;
+    nav.classList.toggle("is-solid", y > 24 || !drawer.hidden);
+    nav.classList.toggle("is-hidden", y > 400 && y > last + 4 && drawer.hidden);
+    if (y < last - 4) nav.classList.remove("is-hidden");
+    last = y;
+  };
+  addEventListener("scroll", onScroll, { passive: true });
+  onScroll();
+  burger.addEventListener("click", () => {
+    const open = drawer.hidden;
+    drawer.hidden = !open;
+    burger.setAttribute("aria-expanded", String(open));
+    document.body.style.overflow = open ? "hidden" : "";
+    onScroll();
+  });
+  drawer.addEventListener("click", (e) => {
+    if ((e.target as HTMLElement).closest("a")) {
+      drawer.hidden = true;
+      document.body.style.overflow = "";
+      burger.setAttribute("aria-expanded", "false");
+    }
+  });
+</script>

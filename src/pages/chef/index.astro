@@ -1,0 +1,130 @@
+---
+import Staff from "../../layouts/Staff.astro";
+import Icon from "../../components/Icon.astro";
+---
+<Staff title="Sign in" bare>
+  <section class="login">
+    <div class="login__card">
+      <img class="login__art" src="/img/mascot-ok.webp" alt="" width="600" height="582" />
+      <p class="eyebrow">Staff only</p>
+      <h1>Chef Magic</h1>
+      <p class="muted">Kitchen, desk and dashboard for the Pandia's team.</p>
+      <form data-login>
+        <label class="sfield">Email
+          <input name="email" type="email" autocomplete="username" required />
+        </label>
+        <label class="sfield">Password
+          <input name="password" type="password" autocomplete="current-password" required minlength="6" />
+        </label>
+        <p class="login__err" data-err role="alert" hidden></p>
+        <button class="sbtn sbtn--primary login__go" type="submit"><Icon name="lock" /> Sign in</button>
+      </form>
+      <p class="login__fine muted">Forgot your password? Ask the owner to reset it from the dashboard.</p>
+      <a class="login__back" href="/">← Back to the website</a>
+    </div>
+  </section>
+</Staff>
+
+<style>
+  .login {
+    min-height: calc(100svh - 60px);
+    display: grid;
+    place-items: center;
+    background:
+      radial-gradient(60% 50% at 50% 0%, #f8d995, transparent 70%),
+      var(--cream-100);
+    margin: -18px calc(var(--gutter) * -1) -40px;
+    padding: 30px var(--gutter);
+  }
+  .login__card {
+    width: min(100%, 420px);
+    background: #fff;
+    border-radius: 26px;
+    padding: 36px 30px 26px;
+    box-shadow: var(--shadow-pop);
+    text-align: center;
+    position: relative;
+  }
+  .login__art {
+    width: 130px;
+    height: auto;
+    margin: -100px auto 4px;
+    display: block;
+  }
+  h1 {
+    font-size: var(--step-3);
+    color: var(--maroon-900);
+    margin: 6px 0 4px;
+  }
+  form {
+    display: grid;
+    gap: 14px;
+    margin-top: 22px;
+    text-align: left;
+  }
+  .login__go {
+    min-height: 52px;
+    margin-top: 4px;
+  }
+  .login__err {
+    color: var(--red-600);
+    font-weight: 600;
+    margin: 0;
+  }
+  .login__fine {
+    font-size: 0.82rem;
+    margin-top: 16px;
+  }
+  .login__back {
+    display: inline-block;
+    margin-top: 8px;
+    font-size: 0.88rem;
+    color: var(--red-700);
+  }
+</style>
+
+<script>
+  import { sb, getMe, homeFor, friendlyError } from "../../lib/staff";
+  import { hasBackend } from "../../lib/supabase";
+
+  const form = document.querySelector<HTMLFormElement>("[data-login]")!;
+  const err = document.querySelector<HTMLElement>("[data-err]")!;
+  const next = new URLSearchParams(location.search).get("next");
+  const go = (role: Parameters<typeof homeFor>[0]) =>
+    location.replace(next && next.startsWith("/chef/") ? next : homeFor(role));
+
+  if (!hasBackend) {
+    err.textContent = "The ordering backend isn't configured on this build.";
+    err.hidden = false;
+  } else {
+    // already signed in? go straight to work
+    getMe().then((me) => me && go(me.role));
+  }
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    err.hidden = true;
+    const btn = form.querySelector<HTMLButtonElement>("button")!;
+    btn.disabled = true;
+    const f = new FormData(form);
+    try {
+      const { error } = await sb().auth.signInWithPassword({
+        email: String(f.get("email")).trim(),
+        password: String(f.get("password")),
+      });
+      if (error) throw error;
+      const me = await getMe();
+      if (!me) {
+        await sb().auth.signOut();
+        throw new Error("This account doesn't have staff access. Ask the owner.");
+      }
+      go(me.role);
+    } catch (ex) {
+      const m = (ex as Error).message;
+      err.textContent = m.includes("staff access") ? m : friendlyError(ex);
+      err.hidden = false;
+    } finally {
+      btn.disabled = false;
+    }
+  });
+</script>

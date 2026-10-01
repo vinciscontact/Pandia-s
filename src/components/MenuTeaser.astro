@@ -1,0 +1,141 @@
+---
+import SectionHead from "./SectionHead.astro";
+import DishCard from "./DishCard.astro";
+import Icon from "./Icon.astro";
+import { categories, byCategory } from "../data/menu";
+const picks = ["biryani", "chicken", "seafood", "mutton", "kebabs"].map((id) => categories.find((c) => c.id === id)!);
+---
+<section class="tease">
+  <div class="wrap tease__grid">
+    <div class="tease__side">
+      <SectionHead eyebrow="The menu" title="Morning tiffin to <em>midnight biryani.</em>" intro="Biryani is the headline, but the regulars come for everything around it." />
+      <div class="tease__tabs" role="tablist" aria-label="Menu categories" data-reveal>
+        {picks.map((c, i) => (
+          <button role="tab" type="button" id={`tab-${c.id}`} aria-controls={`panel-${c.id}`} aria-selected={i === 0 ? "true" : "false"} tabindex={i === 0 ? 0 : -1} data-tab={c.id}>
+            {c.name}
+          </button>
+        ))}
+      </div>
+    </div>
+    <div class="tease__panels" data-reveal>
+      {picks.map((c, i) => (
+        <div role="tabpanel" id={`panel-${c.id}`} aria-labelledby={`tab-${c.id}`} hidden={i !== 0} data-panel={c.id}>
+          <p class="tease__blurb">{c.blurb}</p>
+          {byCategory(c.id).slice(0, 5).map((d) => <DishCard dish={d} variant="row" />)}
+          <a class="tease__link" href={`/menu#${c.id}`}>All {c.name.toLowerCase()} <Icon name="arrow" /></a>
+        </div>
+      ))}
+    </div>
+  </div>
+</section>
+<style>
+  .tease {
+    padding: clamp(60px, 9vw, 120px) 0;
+    background: var(--cream-50);
+    border-block: 1px solid var(--line);
+  }
+  .tease__grid {
+    display: grid;
+    grid-template-columns: 0.9fr 1.1fr;
+    gap: clamp(30px, 6vw, 90px);
+    align-items: start;
+  }
+  .tease__grid > * {
+    min-width: 0;
+  }
+  .tease__side {
+    position: sticky;
+    top: calc(var(--nav-h) + 30px);
+  }
+  .tease__tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .tease__tabs button {
+    border: 1.5px solid var(--line);
+    background: transparent;
+    border-radius: 999px;
+    padding: 10px 18px;
+    font-weight: 600;
+    transition: all 0.3s var(--ease-out);
+  }
+  .tease__tabs button[aria-selected="true"] {
+    background: var(--maroon-900);
+    color: var(--gold-300);
+    border-color: var(--maroon-900);
+  }
+  .tease__blurb {
+    font-family: var(--font-display);
+    font-style: italic;
+    font-size: var(--step-1);
+    color: var(--red-700);
+    margin-bottom: 6px;
+  }
+  .tease__panels [data-panel]:not([hidden]) {
+    animation: fadeUp 0.5s var(--ease-out);
+  }
+  @keyframes fadeUp {
+    from {
+      opacity: 0;
+      transform: translateY(12px);
+    }
+  }
+  .tease__link {
+    display: inline-flex;
+    gap: 8px;
+    align-items: center;
+    margin-top: 22px;
+    font-weight: 650;
+    color: var(--red-700);
+    text-decoration: none;
+  }
+  .tease__link :global(svg) {
+    width: 18px;
+    transition: transform 0.3s;
+  }
+  .tease__link:hover :global(svg) {
+    transform: translateX(4px);
+  }
+  @media (max-width: 860px) {
+    .tease__grid {
+      grid-template-columns: 1fr;
+    }
+    .tease__side {
+      position: static;
+    }
+    .tease__tabs {
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      scrollbar-width: none;
+      margin-inline: calc(var(--gutter) * -1);
+      padding-inline: var(--gutter);
+    }
+    .tease__tabs button {
+      flex: none;
+    }
+  }
+</style>
+<script>
+  document.querySelectorAll<HTMLElement>(".tease").forEach((root) => {
+    const tabs = [...root.querySelectorAll<HTMLButtonElement>("[data-tab]")];
+    const select = (t: HTMLButtonElement) => {
+      tabs.forEach((b) => {
+        const on = b === t;
+        b.setAttribute("aria-selected", String(on));
+        b.tabIndex = on ? 0 : -1;
+        root.querySelector<HTMLElement>(`[data-panel="${b.dataset.tab}"]`)!.hidden = !on;
+      });
+    };
+    tabs.forEach((t, i) => {
+      t.addEventListener("click", () => select(t));
+      t.addEventListener("keydown", (e) => {
+        const d = e.key === "ArrowRight" ? 1 : e.key === "ArrowLeft" ? -1 : 0;
+        if (!d) return;
+        const n = tabs[(i + d + tabs.length) % tabs.length];
+        n.focus();
+        select(n);
+      });
+    });
+  });
+</script>

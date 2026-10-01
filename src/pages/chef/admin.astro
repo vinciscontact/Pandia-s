@@ -1,0 +1,879 @@
+---
+import Staff from "../../layouts/Staff.astro";
+import Icon from "../../components/Icon.astro";
+---
+<Staff title="Dashboard">
+  <div class="adm">
+    <div class="shead">
+      <h1>Dashboard</h1>
+      <span class="grow"></span>
+      <div class="range" role="tablist" aria-label="Date range" data-range>
+        <button type="button" role="tab" data-days="0" aria-selected="true">Today</button>
+        <button type="button" role="tab" data-days="6" aria-selected="false">7 days</button>
+        <button type="button" role="tab" data-days="29" aria-selected="false">30 days</button>
+      </div>
+    </div>
+
+    <nav class="tabs" aria-label="Dashboard sections" data-tabs>
+      <button type="button" data-tab="overview" aria-current="page"><Icon name="chart" /> Overview</button>
+      <button type="button" data-tab="bills"><Icon name="receipt" /> Bills</button>
+      <button type="button" data-tab="feedback"><Icon name="message" /> Feedback <b class="badge" data-fb-badge hidden></b></button>
+      <button type="button" data-tab="menu" data-admin-only><Icon name="pot" /> Menu & prices</button>
+      <button type="button" data-tab="setup" data-admin-only><Icon name="table" /> Branches & tables</button>
+      <button type="button" data-tab="staff" data-admin-only><Icon name="users" /> Staff</button>
+    </nav>
+
+    <!-- OVERVIEW -->
+    <section data-pane="overview">
+      <div class="kpis" data-kpis></div>
+      <div class="grid2">
+        <div class="scard chart"><h2>Sales by branch</h2><div data-c-branch></div></div>
+        <div class="scard chart"><h2>How guests paid</h2><div data-c-method></div></div>
+        <div class="scard chart"><h2>Top dishes</h2><div data-c-dishes></div></div>
+        <div class="scard chart"><h2>Orders by hour</h2><div class="cols" data-c-hours></div></div>
+      </div>
+    </section>
+
+    <!-- BILLS -->
+    <section data-pane="bills" hidden>
+      <div class="scard">
+        <div class="tbl-wrap">
+          <table class="tbl">
+            <thead><tr><th>When</th><th data-col-branch>Branch</th><th>Table</th><th>Orders</th><th>Status</th><th>Paid by</th><th class="num">Total</th></tr></thead>
+            <tbody data-bills></tbody>
+          </table>
+        </div>
+        <p class="empty" data-bills-empty hidden>No bills in this period.</p>
+      </div>
+    </section>
+
+    <!-- FEEDBACK -->
+    <section data-pane="feedback" hidden>
+      <div class="fbsum" data-fb-sum></div>
+      <div class="fbfilter">
+        <label><input type="checkbox" data-fb-low /> Only 1–3 stars</label>
+        <label><input type="checkbox" data-fb-open /> Only unresolved</label>
+      </div>
+      <div class="fblist" data-fb-list></div>
+    </section>
+
+    <!-- MENU -->
+    <section data-pane="menu" hidden>
+      <div class="scard">
+        <div class="menu-tools">
+          <input class="sinput" type="search" placeholder="Search dishes…" data-m-search aria-label="Search dishes" />
+          <label class="muted"><input type="checkbox" data-m-off /> Sold out only</label>
+        </div>
+        <p class="muted small">Prices here are what the server charges. Turn a dish off when it runs out: it shows "Sold out" on every table instantly.</p>
+        <div class="tbl-wrap">
+          <table class="tbl">
+            <thead><tr><th>Dish</th><th>Category</th><th class="num">Price ₹</th><th>On menu</th></tr></thead>
+            <tbody data-menu></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- SETUP -->
+    <section data-pane="setup" hidden>
+      <div class="setup" data-setup></div>
+      <p class="muted small">Print the QR cards for each table from <a href="/tables" target="_blank">/tables</a>.</p>
+    </section>
+
+    <!-- STAFF -->
+    <section data-pane="staff" hidden>
+      <div class="grid2 grid2--staff">
+        <div class="scard">
+          <h2>Team</h2>
+          <div class="tbl-wrap">
+            <table class="tbl">
+              <thead><tr><th>Name</th><th>Role</th><th>Branch</th><th>Status</th><th></th></tr></thead>
+              <tbody data-staff></tbody>
+            </table>
+          </div>
+        </div>
+        <form class="scard addstaff" data-addstaff>
+          <h2>Add a login</h2>
+          <label class="sfield">Name<input name="name" required maxlength="80" /></label>
+          <label class="sfield">Email<input name="email" type="email" required /></label>
+          <label class="sfield">Password <span class="muted">(8+ characters; tell them in person)</span><input name="password" type="text" required minlength="8" autocomplete="new-password" /></label>
+          <label class="sfield">Role
+            <select name="role" required>
+              <option value="kitchen">Kitchen: kitchen screen only</option>
+              <option value="cashier">Cashier: desk, bills, payments</option>
+              <option value="manager">Manager: their branch, discounts, feedback</option>
+              <option value="admin">Owner: everything, all branches</option>
+            </select>
+          </label>
+          <label class="sfield" data-branch-field>Branch<select name="branch_id" data-staff-branch></select></label>
+          <button class="sbtn sbtn--primary" type="submit"><Icon name="plus" /> Create login</button>
+        </form>
+      </div>
+    </section>
+  </div>
+</Staff>
+
+<style>
+  .range {
+    display: inline-flex;
+    background: #fff;
+    border: 1px solid var(--s-line);
+    border-radius: 999px;
+    padding: 3px;
+  }
+  .range button {
+    border: 0;
+    background: none;
+    padding: 7px 14px;
+    border-radius: 999px;
+    font-weight: 600;
+    cursor: pointer;
+    color: var(--s-soft);
+  }
+  .range button[aria-selected="true"] {
+    background: var(--maroon-900);
+    color: #fff;
+  }
+  .tabs {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 18px;
+    overflow-x: auto;
+    border-bottom: 1px solid var(--s-line);
+  }
+  .tabs button {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    border: 0;
+    background: none;
+    padding: 10px 14px;
+    font-weight: 650;
+    color: var(--s-soft);
+    border-bottom: 3px solid transparent;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .tabs button[aria-current="page"] {
+    color: var(--s-ink);
+    border-color: var(--red-600);
+  }
+  .tabs svg {
+    width: 18px;
+  }
+  .badge {
+    background: var(--red-600);
+    color: #fff;
+    border-radius: 999px;
+    font-size: 0.72rem;
+    padding: 1px 7px;
+  }
+  .small {
+    font-size: 0.85rem;
+  }
+
+  /* KPIs */
+  .kpis {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+  .kpis :global(.kpi) {
+    background: #fff;
+    border: 1px solid var(--s-line);
+    border-radius: 18px;
+    padding: 16px 18px;
+  }
+  .kpis :global(.kpi span) {
+    display: block;
+    color: var(--s-soft);
+    font-size: 0.85rem;
+    font-weight: 600;
+  }
+  .kpis :global(.kpi b) {
+    display: block;
+    font-family: var(--font-display);
+    font-size: 2rem;
+    line-height: 1.15;
+    margin-top: 4px;
+  }
+  .kpis :global(.kpi small) {
+    color: var(--s-soft);
+  }
+  .kpis :global(.kpi--hero) {
+    background: var(--maroon-900);
+    color: #fff;
+    border-color: var(--maroon-900);
+  }
+  .kpis :global(.kpi--hero span),
+  .kpis :global(.kpi--hero small) {
+    color: var(--gold-300);
+  }
+
+  .grid2 {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+  }
+  .grid2--staff {
+    grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+    align-items: start;
+  }
+  @media (max-width: 900px) {
+    .grid2,
+    .grid2--staff {
+      grid-template-columns: 1fr;
+    }
+  }
+  .chart h2,
+  .scard h2 {
+    font-size: 1.15rem;
+    margin: 0 0 14px;
+  }
+
+  /* horizontal bars: one hue, value as text */
+  .chart :global(.hb) {
+    display: grid;
+    grid-template-columns: minmax(90px, 34%) 1fr auto;
+    align-items: center;
+    gap: 10px;
+    padding: 5px 0;
+    font-size: 0.92rem;
+  }
+  .chart :global(.hb__name) {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .chart :global(.hb__track) {
+    height: 14px;
+    border-radius: 4px;
+    background: var(--cream-100);
+    overflow: hidden;
+  }
+  .chart :global(.hb__fill) {
+    height: 100%;
+    border-radius: 0 4px 4px 0;
+    background: var(--red-700);
+    transform-origin: left;
+    animation: grow 0.6s var(--ease-out);
+  }
+  .chart :global(.hb:hover .hb__fill) {
+    background: var(--red-600);
+  }
+  .chart :global(.hb__val) {
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    min-width: 70px;
+    text-align: right;
+  }
+  @keyframes grow {
+    from {
+      transform: scaleX(0);
+    }
+  }
+  /* columns for hours */
+  .cols {
+    display: flex;
+    align-items: flex-end;
+    gap: 3px;
+    height: 170px;
+    padding-top: 18px;
+  }
+  .cols :global(.col) {
+    flex: 1;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 4px;
+    position: relative;
+  }
+  .cols :global(.col i) {
+    width: 100%;
+    max-width: 22px;
+    background: var(--gold-600);
+    border-radius: 4px 4px 0 0;
+    min-height: 2px;
+  }
+  .cols :global(.col:hover i) {
+    background: var(--red-700);
+  }
+  .cols :global(.col small) {
+    font-size: 0.65rem;
+    color: var(--s-soft);
+    font-family: var(--font-mono);
+  }
+  .cols :global(.col[data-tip]:hover::after) {
+    content: attr(data-tip);
+    position: absolute;
+    bottom: calc(100% + 4px);
+    background: var(--maroon-900);
+    color: #fff;
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    white-space: nowrap;
+    z-index: 2;
+  }
+
+  /* tables */
+  .tbl-wrap {
+    overflow-x: auto;
+  }
+  .tbl {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.92rem;
+  }
+  .tbl th {
+    text-align: left;
+    font-size: 0.75rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--s-soft);
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--s-line);
+  }
+  .tbl td {
+    padding: 10px;
+    border-bottom: 1px solid var(--s-line);
+    vertical-align: middle;
+  }
+  .tbl .num,
+  .tbl :global(td.num) {
+    text-align: right;
+    font-family: var(--font-mono);
+  }
+  .tbl :global(tr:hover td) {
+    background: var(--cream-100);
+  }
+  .tbl :global(input.price) {
+    width: 100px;
+    text-align: right;
+    min-height: 38px;
+    font-family: var(--font-mono);
+  }
+
+  /* switch */
+  .tbl :global(.sw) {
+    position: relative;
+    display: inline-block;
+    width: 46px;
+    height: 26px;
+  }
+  .tbl :global(.sw input) {
+    opacity: 0;
+    width: 0;
+    height: 0;
+  }
+  .tbl :global(.sw span) {
+    position: absolute;
+    inset: 0;
+    border-radius: 999px;
+    background: var(--cream-200);
+    transition: 0.2s;
+    cursor: pointer;
+  }
+  .tbl :global(.sw span::before) {
+    content: "";
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    left: 3px;
+    top: 3px;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 1px 3px rgb(0 0 0 / 0.25);
+    transition: 0.2s var(--ease-spring);
+  }
+  .tbl :global(.sw input:checked + span) {
+    background: var(--leaf);
+  }
+  .tbl :global(.sw input:checked + span::before) {
+    transform: translateX(20px);
+  }
+  .tbl :global(.sw input:focus-visible + span) {
+    outline: 2px solid var(--gold-500);
+    outline-offset: 2px;
+  }
+
+  /* feedback */
+  .fbsum {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+    gap: 12px;
+    margin-bottom: 14px;
+  }
+  .fbfilter {
+    display: flex;
+    gap: 18px;
+    margin-bottom: 12px;
+    font-weight: 600;
+    font-size: 0.9rem;
+  }
+  .fblist {
+    display: grid;
+    gap: 10px;
+  }
+  .fblist :global(.fb) {
+    background: #fff;
+    border: 1px solid var(--s-line);
+    border-left: 5px solid var(--leaf);
+    border-radius: 14px;
+    padding: 14px 16px;
+  }
+  .fblist :global(.fb--low) {
+    border-left-color: var(--red-600);
+  }
+  .fblist :global(.fb--mid) {
+    border-left-color: var(--gold-500);
+  }
+  .fblist :global(.fb--done) {
+    opacity: 0.6;
+  }
+  .fblist :global(.fb__top) {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .fblist :global(.stars) {
+    color: var(--gold-600);
+    letter-spacing: 2px;
+    font-size: 1.1rem;
+  }
+  .fblist :global(.fb__top .grow) {
+    flex: 1;
+  }
+  .fblist :global(.fb p) {
+    margin: 8px 0 0;
+  }
+  .fblist :global(.fb__meta) {
+    font-size: 0.82rem;
+    color: var(--s-soft);
+    margin-top: 6px;
+  }
+  .fblist :global(.fb__fix) {
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+  }
+  .fblist :global(.fb__fix input) {
+    flex: 1;
+    min-height: 36px;
+  }
+
+  .menu-tools {
+    display: flex;
+    gap: 14px;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+  .menu-tools input[type="search"] {
+    flex: 1;
+    max-width: 360px;
+  }
+
+  .setup {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 16px;
+    margin-bottom: 12px;
+  }
+  .setup :global(form) {
+    display: grid;
+    gap: 12px;
+  }
+  .setup :global(.row) {
+    display: flex;
+    gap: 10px;
+    align-items: flex-end;
+  }
+  .setup :global(.row .sfield) {
+    flex: 1;
+  }
+  .setup :global(.chips) {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .setup :global(.chips button) {
+    min-width: 40px;
+    min-height: 34px;
+    border-radius: 10px;
+    border: 1.5px solid var(--s-line);
+    background: #fff;
+    font-family: var(--font-mono);
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .setup :global(.chips button.off) {
+    opacity: 0.4;
+    text-decoration: line-through;
+  }
+  .addstaff {
+    display: grid;
+    gap: 12px;
+  }
+</style>
+
+<script>
+  import { initStaffPage, sb, esc, rupee, dateTime, istDayStart, act, toast, ROLE_LABEL, type Role } from "../../lib/staff";
+
+  const page = await initStaffPage(["manager", "admin"], { allowAllBranches: true });
+  const isAdmin = page.me.role === "admin";
+  const $ = <T extends HTMLElement = HTMLElement>(s: string) => document.querySelector<T>(s)!;
+  const $$ = <T extends HTMLElement = HTMLElement>(s: string) => [...document.querySelectorAll<T>(s)];
+  $$("[data-admin-only]").forEach((el) => (el.hidden = !isAdmin));
+
+  let days = 0;
+  let tab = "overview";
+  const since = () => istDayStart(days);
+  /** branch filter for queries ("" = all branches, admin only) */
+  const scope = <Q extends { eq: (c: string, v: string) => Q }>(q: Q) => (page.branch ? q.eq("branch_id", page.branch) : q);
+
+  // ---------- tabs + range
+  $$<HTMLButtonElement>("[data-tab]").forEach((b) =>
+    b.addEventListener("click", () => {
+      tab = b.dataset.tab!;
+      $$("[data-tab]").forEach((x) => x === b ? x.setAttribute("aria-current", "page") : x.removeAttribute("aria-current"));
+      $$("[data-pane]").forEach((p) => (p.hidden = p.dataset.pane !== tab));
+      $("[data-range]").style.visibility = ["overview", "bills", "feedback"].includes(tab) ? "visible" : "hidden";
+      load();
+    })
+  );
+  $$<HTMLButtonElement>("[data-days]").forEach((b) =>
+    b.addEventListener("click", () => {
+      days = Number(b.dataset.days);
+      $$("[data-days]").forEach((x) => x.setAttribute("aria-selected", String(x === b)));
+      load();
+    })
+  );
+  page.onBranchChange(() => load());
+
+  function load() {
+    ({ overview, bills, feedback, menu, setup, staff } as Record<string, () => Promise<void>>)[tab]().catch((e) => {
+      console.error(e);
+      toast("Couldn't load. Check the connection.", "err");
+    });
+    loadFeedbackBadge();
+  }
+
+  // ---------- small chart helpers (single series: one hue, values as text)
+  const hbars = (rows: { name: string; value: number; label: string }[]) => {
+    if (!rows.length) return `<p class="empty">Nothing yet.</p>`;
+    const max = Math.max(...rows.map((r) => r.value), 1);
+    return rows
+      .map(
+        (r) => `<div class="hb" title="${esc(r.name)}: ${esc(r.label)}"><span class="hb__name">${esc(r.name)}</span>
+          <span class="hb__track"><i class="hb__fill" style="display:block;width:${(r.value / max) * 100}%"></i></span>
+          <span class="hb__val">${esc(r.label)}</span></div>`
+      )
+      .join("");
+  };
+  const kpi = (label: string, value: string, sub = "", hero = false) =>
+    `<div class="kpi ${hero ? "kpi--hero" : ""}"><span>${label}</span><b>${value}</b>${sub ? `<small>${sub}</small>` : ""}</div>`;
+
+  // ---------- OVERVIEW
+  async function overview() {
+    const s = since();
+    const [pay, ord, fb] = await Promise.all([
+      scope(sb().from("payments").select("amount, method, branch_id, session_id").gte("created_at", s)).limit(10000),
+      scope(sb().from("orders").select("created_at, branch_id, status, order_items(name, qty, unit_price)").gte("created_at", s).neq("status", "cancelled")).limit(5000),
+      scope(sb().from("feedback").select("rating, google_clicked_at").gte("created_at", s)).limit(5000),
+    ]);
+    if (pay.error || ord.error || fb.error) throw pay.error || ord.error || fb.error;
+    const payments = pay.data!, orders = ord.data!, fbs = fb.data!;
+    const revenue = payments.reduce((a, p) => a + Number(p.amount), 0);
+    const bills = new Set(payments.map((p) => p.session_id)).size;
+    const avgRating = fbs.length ? fbs.reduce((a, f) => a + f.rating, 0) / fbs.length : 0;
+    const google = fbs.filter((f) => f.google_clicked_at).length;
+    $("[data-kpis]").innerHTML = [
+      kpi("Sales collected", rupee(revenue), days ? `last ${days + 1} days` : "today", true),
+      kpi("Bills paid", String(bills), bills ? `avg ${rupee(Math.round(revenue / bills))}` : ""),
+      kpi("Orders", String(orders.length), `${orders.reduce((a, o) => a + o.order_items.reduce((b, i) => b + i.qty, 0), 0)} plates`),
+      kpi("Guest rating", fbs.length ? avgRating.toFixed(1) + " ★" : "–", `${fbs.length} reviews`),
+      kpi("Sent to Google", String(google), fbs.length ? `${Math.round((google / fbs.length) * 100)}% of reviewers` : ""),
+    ].join("");
+
+    const byBranch = new Map<string, number>();
+    payments.forEach((p) => byBranch.set(p.branch_id, (byBranch.get(p.branch_id) || 0) + Number(p.amount)));
+    $("[data-c-branch]").innerHTML = hbars(
+      [...byBranch].sort((a, b) => b[1] - a[1]).map(([b, v]) => ({ name: page.branchName(b), value: v, label: rupee(v) }))
+    );
+    const byMethod = new Map<string, number>();
+    payments.forEach((p) => byMethod.set(p.method, (byMethod.get(p.method) || 0) + Number(p.amount)));
+    $("[data-c-method]").innerHTML = hbars(
+      [...byMethod].sort((a, b) => b[1] - a[1]).map(([m, v]) => ({ name: m.toUpperCase(), value: v, label: `${rupee(v)} · ${Math.round((v / (revenue || 1)) * 100)}%` }))
+    );
+    const dish = new Map<string, number>();
+    orders.forEach((o) => o.order_items.forEach((i) => dish.set(i.name, (dish.get(i.name) || 0) + i.qty)));
+    $("[data-c-dishes]").innerHTML = hbars(
+      [...dish].sort((a, b) => b[1] - a[1]).slice(0, 8).map(([n, q]) => ({ name: n, value: q, label: `${q} sold` }))
+    );
+    const hours = Array(24).fill(0);
+    orders.forEach((o) => hours[new Date(Date.parse(o.created_at) + 5.5 * 3600e3).getUTCHours()]++);
+    const max = Math.max(...hours, 1);
+    const from = 6;
+    $("[data-c-hours]").innerHTML = hours
+      .slice(from)
+      .map((n, i) => {
+        const h = i + from;
+        const lbl = `${h % 12 || 12}${h < 12 ? "a" : "p"}`;
+        return `<div class="col" data-tip="${lbl}: ${n} orders"><i style="height:${(n / max) * 100}%"></i><small>${h % 3 === 0 ? lbl : "&nbsp;"}</small></div>`;
+      })
+      .join("");
+  }
+
+  // ---------- BILLS
+  async function bills() {
+    const { data, error } = await scope(
+      sb().from("table_sessions").select("id, branch_id, table_label, status, total, opened_at, orders(count), payments(method, amount)").gte("opened_at", since())
+    )
+      .order("opened_at", { ascending: false })
+      .limit(500);
+    if (error) throw error;
+    const label: Record<string, string> = { open: "Eating", bill_requested: "Wants bill", paid: "Paid", closed: "Closed" };
+    $("[data-col-branch]").hidden = !!page.branch;
+    $("[data-bills]").innerHTML = (data || [])
+      .map((s: any) => {
+        const paid = (s.payments || []).reduce((a: number, p: any) => a + Number(p.amount), 0);
+        const methods = [...new Set((s.payments || []).map((p: any) => p.method.toUpperCase()))].join(" + ");
+        const state = s.status === "closed" && paid < Number(s.total) ? "Closed unpaid" : label[s.status];
+        return `<tr><td>${dateTime(s.opened_at)}</td>${page.branch ? "" : `<td>${esc(page.branchName(s.branch_id))}</td>`}
+          <td>${esc(s.table_label)}</td><td>${s.orders?.[0]?.count ?? 0}</td>
+          <td><span class="pill">${state}</span></td><td>${methods || "–"}</td><td class="num">${rupee(s.total)}</td></tr>`;
+      })
+      .join("");
+    $("[data-bills-empty]").hidden = !!data?.length;
+  }
+
+  // ---------- FEEDBACK
+  type Fb = { id: string; branch_id: string; table_label: string; rating: number; food: number | null; service: number | null; comment: string | null; name: string | null; phone: string | null; created_at: string; google_clicked_at: string | null; resolved_at: string | null; resolution_note: string | null };
+  const stars = (n: number) => "★".repeat(n) + "☆".repeat(5 - n);
+  async function feedback() {
+    const { data, error } = await scope(sb().from("feedback").select("*").gte("created_at", since())).order("created_at", { ascending: false }).limit(500);
+    if (error) throw error;
+    const all = data as Fb[];
+    const avg = (k: "rating" | "food" | "service") => {
+      const v = all.map((f) => f[k]).filter((x): x is number => !!x);
+      return v.length ? (v.reduce((a, b) => a + b, 0) / v.length).toFixed(1) + " ★" : "–";
+    };
+    $("[data-fb-sum]").innerHTML = [
+      kpi("Overall", avg("rating"), `${all.length} guests`, true),
+      kpi("Food", avg("food")),
+      kpi("Service", avg("service")),
+      kpi("Need attention", String(all.filter((f) => f.rating <= 3 && !f.resolved_at).length), "1–3 stars, unresolved"),
+      kpi("Clicked to Google", String(all.filter((f) => f.google_clicked_at).length)),
+    ].join("");
+    const low = $<HTMLInputElement>("[data-fb-low]").checked;
+    const open = $<HTMLInputElement>("[data-fb-open]").checked;
+    const rows = all.filter((f) => (!low || f.rating <= 3) && (!open || !f.resolved_at));
+    $("[data-fb-list]").innerHTML = rows.length
+      ? rows
+          .map(
+            (f) => `<article class="fb ${f.rating <= 2 ? "fb--low" : f.rating === 3 ? "fb--mid" : ""} ${f.resolved_at ? "fb--done" : ""}">
+          <div class="fb__top"><span class="stars" aria-label="${f.rating} of 5">${stars(f.rating)}</span>
+            <span class="muted">${f.food ? `Food ${f.food} · ` : ""}${f.service ? `Service ${f.service}` : ""}</span>
+            <span class="grow"></span>
+            ${f.google_clicked_at ? `<span class="pill">Went to Google</span>` : ""}
+            ${f.resolved_at ? `<span class="pill">Resolved</span>` : ""}</div>
+          ${f.comment ? `<p>${esc(f.comment)}</p>` : ""}
+          <div class="fb__meta">${dateTime(f.created_at)} · ${esc(page.branchName(f.branch_id))}, table ${esc(f.table_label)}${f.name ? ` · ${esc(f.name)}` : ""}${f.phone ? ` · <a href="tel:${esc(f.phone)}">${esc(f.phone)}</a>` : ""}</div>
+          ${f.resolution_note ? `<div class="fb__meta">Note: ${esc(f.resolution_note)}</div>` : ""}
+          ${!f.resolved_at && f.rating <= 3 ? `<div class="fb__fix"><input class="sinput" placeholder="What did we do? (e.g. called and apologised)" data-note="${f.id}" /><button type="button" class="sbtn sbtn--sm" data-resolve="${f.id}">Mark resolved</button></div>` : ""}
+        </article>`
+          )
+          .join("")
+      : `<p class="empty">No feedback in this period yet.</p>`;
+    $$<HTMLButtonElement>("[data-resolve]").forEach((b) =>
+      b.addEventListener("click", () =>
+        act(b, async () => {
+          const note = $<HTMLInputElement>(`[data-note="${b.dataset.resolve}"]`).value;
+          const { error } = await sb().rpc("resolve_feedback", { p_id: b.dataset.resolve, p_note: note || null });
+          if (error) throw error;
+          await feedback();
+        }, "Marked resolved")
+      )
+    );
+  }
+  $$("[data-fb-low], [data-fb-open]").forEach((c) => c.addEventListener("change", () => feedback()));
+
+  async function loadFeedbackBadge() {
+    const { count } = await scope(sb().from("feedback").select("id", { count: "exact", head: true }).lte("rating", 3).is("resolved_at", null));
+    const b = $("[data-fb-badge]");
+    b.hidden = !count;
+    b.textContent = String(count || "");
+  }
+
+  // ---------- MENU (admin)
+  type Item = { id: string; name: string; category: string; price: number; available: boolean };
+  let items: Item[] = [];
+  async function menu() {
+    const { data, error } = await sb().from("menu_items").select("*").order("category").order("name");
+    if (error) throw error;
+    items = data as Item[];
+    paintMenu();
+  }
+  function paintMenu() {
+    const q = $<HTMLInputElement>("[data-m-search]").value.toLowerCase().trim();
+    const off = $<HTMLInputElement>("[data-m-off]").checked;
+    $("[data-menu]").innerHTML = items
+      .filter((i) => (!q || i.name.toLowerCase().includes(q)) && (!off || !i.available))
+      .map(
+        (i) => `<tr><td>${esc(i.name)}</td><td class="muted">${esc(i.category)}</td>
+        <td class="num"><input class="sinput price" type="number" min="0" step="1" value="${Number(i.price)}" data-price="${esc(i.id)}" aria-label="Price of ${esc(i.name)}" /></td>
+        <td><label class="sw"><input type="checkbox" ${i.available ? "checked" : ""} data-avail="${esc(i.id)}" aria-label="${esc(i.name)} on the menu" /><span></span></label></td></tr>`
+      )
+      .join("");
+    $$<HTMLInputElement>("[data-price]").forEach((inp) =>
+      inp.addEventListener("change", async () => {
+        const v = Number(inp.value);
+        if (!(v >= 0)) return;
+        await act(null, async () => {
+          const { error } = await sb().from("menu_items").update({ price: v, updated_at: new Date().toISOString() }).eq("id", inp.dataset.price!);
+          if (error) throw error;
+          items.find((i) => i.id === inp.dataset.price)!.price = v;
+        }, "Price saved");
+      })
+    );
+    $$<HTMLInputElement>("[data-avail]").forEach((inp) =>
+      inp.addEventListener("change", async () => {
+        await act(null, async () => {
+          const { error } = await sb().from("menu_items").update({ available: inp.checked, updated_at: new Date().toISOString() }).eq("id", inp.dataset.avail!);
+          if (error) throw error;
+          items.find((i) => i.id === inp.dataset.avail)!.available = inp.checked;
+        }, inp.checked ? "Back on the menu" : "Marked sold out");
+      })
+    );
+  }
+  $("[data-m-search]").addEventListener("input", paintMenu);
+  $("[data-m-off]").addEventListener("change", paintMenu);
+
+  // ---------- SETUP (admin): Google link, GST, tables
+  async function setup() {
+    const [b, t] = await Promise.all([
+      sb().from("branches").select("*").order("sort"),
+      sb().from("dining_tables").select("branch_id, label, active"),
+    ]);
+    if (b.error || t.error) throw b.error || t.error;
+    $("[data-setup]").innerHTML = b.data!
+      .map((br) => {
+        const tabs = t.data!.filter((x) => x.branch_id === br.id).sort((a, c) => a.label.localeCompare(c.label, "en", { numeric: true }));
+        return `<form class="scard" data-branch-form="${br.id}">
+          <h2>${esc(br.name)}</h2>
+          <label class="sfield">Google review link
+            <input name="google_review_url" type="url" placeholder="https://g.page/r/…/review" value="${esc(br.google_review_url || "")}" />
+            <span class="muted small">From Google Business Profile → Ask for reviews → copy link. Until set, guests get a Google Maps link.</span>
+          </label>
+          <div class="row">
+            <label class="sfield">GST %<input name="tax_percent" type="number" min="0" max="28" step="0.5" value="${Number(br.tax_percent)}" /></label>
+            <label class="sfield">Taking orders<select name="active"><option value="true" ${br.active ? "selected" : ""}>Yes</option><option value="false" ${!br.active ? "selected" : ""}>Paused</option></select></label>
+            <button class="sbtn sbtn--primary" type="submit">Save</button>
+          </div>
+          <div class="sfield">Tables <span class="muted small">(tap to switch a table off/on)</span>
+            <div class="chips">${tabs.map((x) => `<button type="button" class="${x.active ? "" : "off"}" data-tbl="${esc(x.label)}">${esc(x.label)}</button>`).join("")}</div>
+          </div>
+          <div class="row">
+            <label class="sfield">Add table<input name="newtable" placeholder="e.g. 21 or VIP1" pattern="[0-9A-Za-z-]{1,6}" /></label>
+            <button class="sbtn" type="button" data-addtbl>Add</button>
+          </div>
+        </form>`;
+      })
+      .join("");
+    $$<HTMLFormElement>("[data-branch-form]").forEach((form) => {
+      const id = form.dataset.branchForm!;
+      form.addEventListener("submit", (e) => {
+        e.preventDefault();
+        const f = new FormData(form);
+        act(form.querySelector<HTMLButtonElement>("button[type=submit]"), async () => {
+          const { error } = await sb().from("branches").update({
+            google_review_url: String(f.get("google_review_url") || "").trim() || null,
+            tax_percent: Number(f.get("tax_percent")),
+            active: f.get("active") === "true",
+          }).eq("id", id);
+          if (error) throw error;
+        }, "Saved");
+      });
+      form.querySelectorAll<HTMLButtonElement>("[data-tbl]").forEach((b) =>
+        b.addEventListener("click", () =>
+          act(b, async () => {
+            const on = b.classList.contains("off");
+            const { error } = await sb().from("dining_tables").update({ active: on }).eq("branch_id", id).eq("label", b.dataset.tbl!);
+            if (error) throw error;
+            b.classList.toggle("off", !on);
+          })
+        )
+      );
+      form.querySelector<HTMLButtonElement>("[data-addtbl]")!.addEventListener("click", (e) => {
+        const inp = form.querySelector<HTMLInputElement>("[name=newtable]")!;
+        const label = inp.value.trim();
+        if (!/^[0-9A-Za-z-]{1,6}$/.test(label)) return toast("Use up to 6 letters/numbers", "err");
+        act(e.currentTarget as HTMLButtonElement, async () => {
+          const { error } = await sb().from("dining_tables").insert({ branch_id: id, label });
+          if (error) throw error;
+          await setup();
+        }, `Table ${label} added`);
+      });
+    });
+  }
+
+  // ---------- STAFF (admin)
+  type S = { user_id: string; name: string; email: string | null; role: Role; branch_id: string | null; active: boolean };
+  const callStaff = async (body: Record<string, unknown>) => {
+    const { data, error } = await sb().functions.invoke("manage-staff", { body });
+    if (error) {
+      const ctx = await (error as any).context?.json?.().catch(() => null);
+      throw new Error(ctx?.error || error.message);
+    }
+    return data;
+  };
+  async function staff() {
+    const { data, error } = await sb().from("staff").select("user_id, name, email, role, branch_id, active").order("role").order("name");
+    if (error) throw error;
+    $<HTMLSelectElement>("[data-staff-branch]").innerHTML = page.branches.map((b) => `<option value="${b.id}">${esc(b.name)}</option>`).join("");
+    $("[data-staff]").innerHTML = (data as S[])
+      .map(
+        (s) => `<tr><td><b>${esc(s.name)}</b><br><span class="muted small">${esc(s.email || "")}</span></td>
+        <td>${ROLE_LABEL[s.role]}</td><td>${s.branch_id ? esc(page.branchName(s.branch_id)) : "All"}</td>
+        <td><span class="pill">${s.active ? "Active" : "Off"}</span></td>
+        <td>${s.user_id === page.me.user_id ? `<span class="muted small">You</span>` : `
+          <button type="button" class="sbtn sbtn--sm" data-toggle="${s.user_id}" data-on="${s.active}">${s.active ? "Switch off" : "Switch on"}</button>
+          <button type="button" class="sbtn sbtn--sm" data-pw="${s.user_id}">New password</button>`}</td></tr>`
+      )
+      .join("");
+    $$<HTMLButtonElement>("[data-toggle]").forEach((b) =>
+      b.addEventListener("click", () =>
+        act(b, async () => {
+          await callStaff({ action: "update", user_id: b.dataset.toggle, active: b.dataset.on !== "true" });
+          await staff();
+        }, "Updated")
+      )
+    );
+    $$<HTMLButtonElement>("[data-pw]").forEach((b) =>
+      b.addEventListener("click", () => {
+        const pw = prompt("New password for this person (8+ characters). Tell it to them in person.");
+        if (!pw) return;
+        act(b, () => callStaff({ action: "password", user_id: b.dataset.pw, password: pw }), "Password changed");
+      })
+    );
+  }
+  const addForm = $<HTMLFormElement>("[data-addstaff]");
+  const roleSel = addForm.querySelector<HTMLSelectElement>("[name=role]")!;
+  roleSel.addEventListener("change", () => ($("[data-branch-field]").hidden = roleSel.value === "admin"));
+  addForm.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const f = Object.fromEntries(new FormData(addForm));
+    act(addForm.querySelector<HTMLButtonElement>("button[type=submit]"), async () => {
+      await callStaff({ action: "create", ...f });
+      addForm.reset();
+      $("[data-branch-field]").hidden = false;
+      await staff();
+    }, "Login created");
+  });
+
+  load();
+</script>

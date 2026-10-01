@@ -1,0 +1,88 @@
+---
+import "@fontsource-variable/fraunces";
+import "@fontsource-variable/bricolage-grotesque";
+import "@fontsource/jetbrains-mono/500.css";
+import "@fontsource/jetbrains-mono/600.css";
+import "@fontsource-variable/noto-serif-tamil";
+import "../styles/global.css";
+import Nav from "../components/Nav.astro";
+import Footer from "../components/Footer.astro";
+import { site, branches } from "../data/site";
+
+interface Props {
+  title?: string;
+  description?: string;
+  noindex?: boolean;
+  bare?: boolean; // ordering screens hide the big footer
+  theme?: string;
+}
+const { title, description = site.description, noindex = false, bare = false, theme = "#3a0a10" } = Astro.props;
+const fullTitle = title ? `${title} | ${site.name}` : `${site.name} | Biryani House in Chennai`;
+const canonical = new URL(Astro.url.pathname, Astro.site);
+const og = new URL("/img/og.jpg", Astro.site);
+
+const ld = {
+  "@context": "https://schema.org",
+  "@type": "Restaurant",
+  name: site.name,
+  servesCuisine: site.cuisines,
+  priceRange: "₹₹",
+  telephone: site.phone,
+  url: Astro.site?.toString(),
+  logo: new URL("/img/logo.png", Astro.site).toString(),
+  image: og.toString(),
+  department: branches.filter((b) => !b.verify).map((b) => ({
+    "@type": "Restaurant",
+    name: `${site.name}, ${b.name}`,
+    address: { "@type": "PostalAddress", streetAddress: b.address, addressLocality: "Chennai", addressCountry: "IN" },
+    telephone: b.phone,
+    geo: b.lat ? { "@type": "GeoCoordinates", latitude: b.lat, longitude: b.lng } : undefined,
+  })),
+};
+---
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>{fullTitle}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    {noindex && <meta name="robots" content="noindex" />}
+    <meta name="theme-color" content={theme} />
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={fullTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:image" content={og} />
+    <meta property="og:url" content={canonical} />
+    <meta name="twitter:card" content="summary_large_image" />
+    <script type="application/ld+json" set:html={JSON.stringify(ld)} />
+    <script is:inline>document.documentElement.classList.replace("no-js", "js");</script>
+    <slot name="head" />
+  </head>
+  <body>
+    <a class="skip" href="#main">Skip to content</a>
+    <Nav />
+    <main id="main">
+      <slot />
+    </main>
+    {!bare && <Footer />}
+    <script>
+      // Reveal-on-scroll for any [data-reveal] element.
+      const io = new IntersectionObserver(
+        (entries) => {
+          for (const e of entries) {
+            if (e.isIntersecting) {
+              e.target.classList.add("is-in");
+              io.unobserve(e.target);
+            }
+          }
+        },
+        { rootMargin: "0px 0px -8% 0px", threshold: 0.12 }
+      );
+      document.querySelectorAll("[data-reveal]").forEach((el) => io.observe(el));
+    </script>
+  </body>
+</html>

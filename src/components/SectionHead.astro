@@ -1,0 +1,49 @@
+---
+interface Props { eyebrow?: string; title: string; intro?: string; align?: "left" | "center"; tone?: "light" | "dark" }
+const { eyebrow, title, intro, align = "left", tone = "light" } = Astro.props;
+---
+<header class={`sh sh--${align} sh--${tone}`} data-reveal>
+  {eyebrow && <p class="eyebrow">{eyebrow}</p>}
+  <h2 set:html={title} />
+  {intro && <p class="sh__intro">{intro}</p>}
+  <slot />
+</header>
+<style>
+  .sh {
+    max-width: 44rem;
+    margin-bottom: clamp(28px, 4vw, 52px);
+  }
+  .sh--center {
+    margin-inline: auto;
+    text-align: center;
+  }
+  .sh--center .eyebrow {
+    justify-content: center;
+  }
+  h2 {
+    font-size: var(--step-4);
+    margin-top: 14px;
+    color: var(--maroon-900);
+  }
+  h2 :global(em) {
+    color: var(--red-600);
+    font-style: italic;
+  }
+  .sh__intro {
+    margin-top: 16px;
+    font-size: var(--step-1);
+    color: var(--text-soft);
+  }
+  .sh--dark h2 {
+    color: var(--cream-50);
+  }
+  .sh--dark h2 :global(em) {
+    color: var(--gold-500);
+  }
+  .sh--dark .eyebrow {
+    color: var(--gold-500);
+  }
+  .sh--dark .sh__intro {
+    color: color-mix(in oklab, var(--cream-50) 75%, transparent);
+  }
+</style>

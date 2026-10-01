@@ -1,0 +1,1292 @@
+---
+// QR table ordering. Table QR codes point to /order?branch=<id>&table=<n>
+import Base from "../layouts/Base.astro";
+import MenuBrowser from "../components/MenuBrowser.astro";
+import Icon from "../components/Icon.astro";
+import { branches, mapsUrl } from "../data/site";
+const branchJson = JSON.stringify(branches.map((b) => ({ id: b.id, name: b.name, tables: b.tables, maps: mapsUrl(b) })));
+---
+<Base title="Order at your table" description="Scan, order and eat. Order straight from your table at Hotel Pandia's." bare noindex>
+  <div class="order" data-order data-branches={branchJson}>
+    <!-- step 1: pick table (shown when the URL has no table) -->
+    <section class="pick wrap" data-view="pick" hidden>
+      <img src="/img/mascot-ok.webp" alt="" width="600" height="582" class="pick__art" />
+      <div class="pick__card">
+        <p class="eyebrow">Order at your table</p>
+        <h1>Scan the QR on your table.</h1>
+        <p>It opens this page with your table already filled in. No QR handy? Pick it here.</p>
+        <form data-pick-form>
+          <label>Branch
+            <select name="branch" required>
+              {branches.map((b) => <option value={b.id}>{b.name}</option>)}
+            </select>
+          </label>
+          <label>Table number
+            <input name="table" inputmode="numeric" pattern="[0-9A-Za-z-]{1,6}" required placeholder="e.g. 7" />
+          </label>
+          <button class="btn" type="submit">Start ordering <Icon name="arrow" /></button>
+        </form>
+      </div>
+    </section>
+
+    <!-- step 1b: this table already has an open bill and this phone isn't on it (new phone, cleared browser, a friend) -->
+    <section class="pick wrap" data-view="join" hidden>
+      <img src="/img/mascot-ok.webp" alt="" width="600" height="582" class="pick__art" />
+      <div class="pick__card">
+        <p class="eyebrow">Table <span data-j-table></span> · <span data-j-branch></span></p>
+        <h1>This table has an open bill.</h1>
+        <p>Enter the 4-digit table PIN to see it and order on it. You'll find the PIN on the phone that ordered first, or just ask your server.</p>
+        <form data-join-form>
+          <label>Table PIN
+            <input class="pin-input" name="pin" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" autocomplete="off" required placeholder="••••" aria-describedby="join-err" />
+          </label>
+          <p class="join__err" id="join-err" data-join-err role="alert" hidden></p>
+          <button class="btn" type="submit">Open the bill <Icon name="arrow" /></button>
+          <button class="btn btn--ghost join__ask" type="button" data-waiter><Icon name="bell" /> Ask a server for the PIN</button>
+        </form>
+      </div>
+    </section>
+
+    <!-- step 2: menu + cart -->
+    <section data-view="menu" hidden>
+      <div class="tablebar">
+        <div class="wrap tablebar__inner">
+          <div class="tablebar__who">
+            <span class="tablebar__badge">Table <b data-table-no></b></span>
+            <span data-branch-name></span>
+            <span class="demo" data-demo hidden>Demo mode</span>
+          </div>
+          <button type="button" class="btn btn--ghost tablebar__waiter" data-waiter><Icon name="bell" /> Call waiter</button>
+        </div>
+      </div>
+      <div class="wrap order__menu">
+        <MenuBrowser mode="order" />
+      </div>
+      <div class="cartbar" data-cartbar hidden>
+        <button type="button" class="cartbar__btn" data-open-cart>
+          <span class="cartbar__count"><Icon name="cart" /> <b data-count>0</b> items</span>
+          <span><b data-total>₹0</b> · View order <Icon name="arrow" /></span>
+        </button>
+      </div>
+    </section>
+
+    <!-- step 3: the table's visit: live orders, running bill, feedback -->
+    <section class="visit wrap" data-view="status" hidden>
+      <div class="visit__main">
+        <div class="status__card">
+          <p class="eyebrow">Table <span data-v-table></span> · <span data-v-branch></span></p>
+          <h1 data-status-title>Got it! Your order is in.</h1>
+          <ol class="track" data-track>
+            <li data-stage="received"><i></i><b>Received</b><span>The kitchen has your order</span></li>
+            <li data-stage="preparing"><i></i><b>Cooking</b><span>Hot off the dum</span></li>
+            <li data-stage="ready"><i></i><b>On its way</b><span>Coming to your table</span></li>
+            <li data-stage="served"><i></i><b>Served</b><span>Enjoy your meal!</span></li>
+          </ol>
+          <p class="pinline" data-pin-row hidden>
+            <span>Table PIN <b data-pin></b></span>
+            Friends at your table can join this bill with it. It also gets you back here on another phone.
+          </p>
+          <div class="status__actions">
+            <button type="button" class="btn" data-order-more><Icon name="plus" /> Order something more</button>
+            <button type="button" class="btn btn--ghost" data-waiter><Icon name="bell" /> Call waiter</button>
+          </div>
+        </div>
+
+        <!-- feedback: asked once the bill is on its way -->
+        <div class="status__card fb" data-fb hidden>
+          <form data-fb-form>
+            <p class="eyebrow">Before you go</p>
+            <h2>How was your meal?</h2>
+            <div class="stars stars--big" data-stars="rating" role="radiogroup" aria-label="Overall rating">
+              {[1, 2, 3, 4, 5].map((n) => <button type="button" role="radio" aria-checked="false" aria-label={`${n} star${n > 1 ? "s" : ""}`} data-v={n}>★</button>)}
+            </div>
+            <div class="fb__more" data-fb-more hidden>
+              <div class="fb__row"><span>Food</span><div class="stars" data-stars="food" role="radiogroup" aria-label="Food">{[1, 2, 3, 4, 5].map((n) => <button type="button" role="radio" aria-checked="false" aria-label={`${n}`} data-v={n}>★</button>)}</div></div>
+              <div class="fb__row"><span>Service</span><div class="stars" data-stars="service" role="radiogroup" aria-label="Service">{[1, 2, 3, 4, 5].map((n) => <button type="button" role="radio" aria-checked="false" aria-label={`${n}`} data-v={n}>★</button>)}</div></div>
+              <label>Tell us more <span class="opt">(optional)</span>
+                <textarea name="comment" rows="3" maxlength="1000" placeholder="What did you love? What should we fix?"></textarea>
+              </label>
+              <div class="fb__pair">
+                <label>Name <span class="opt">(optional)</span><input name="name" maxlength="80" autocomplete="name" /></label>
+                <label>Phone <span class="opt">(optional)</span><input name="phone" maxlength="20" inputmode="tel" autocomplete="tel" /></label>
+              </div>
+              <button class="btn" type="submit">Send feedback <Icon name="arrow" /></button>
+            </div>
+          </form>
+          <div class="fb__thanks" data-fb-thanks hidden>
+            <img src="/img/mascot-ok.webp" alt="" width="600" height="582" />
+            <h2 data-fb-title>Thank you!</h2>
+            <p data-fb-msg>It means a lot to a small kitchen.</p>
+            <a class="btn btn--gold fb__google" data-google target="_blank" rel="noopener"><Icon name="star" /> Share it on Google</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- the running bill for everything this table has ordered -->
+      <aside class="status__card bill">
+        <div class="bill__head">
+          <h2>Your bill</h2>
+          <span class="bill__state" data-bill-state>Open</span>
+        </div>
+        <div class="bill__orders" data-bill-orders></div>
+        <dl class="bill__sum">
+          <div><dt>Subtotal</dt><dd data-b-sub></dd></div>
+          <div data-b-disc-row hidden><dt>Discount</dt><dd data-b-disc></dd></div>
+          <div><dt>GST <span data-b-rate></span>%</dt><dd data-b-tax></dd></div>
+          <div class="bill__total"><dt>Total</dt><dd data-b-total></dd></div>
+        </dl>
+        <p class="bill__note" data-bill-note>Pay at the counter or to your server: cash, card or UPI.</p>
+        <button type="button" class="btn bill__ask" data-ask-bill><Icon name="receipt" /> Get the bill</button>
+      </aside>
+    </section>
+
+    <!-- cart sheet -->
+    <dialog class="sheet" data-sheet aria-labelledby="sheet-title">
+      <div class="sheet__head">
+        <h2 id="sheet-title">Your order</h2>
+        <button type="button" class="sheet__x" data-close aria-label="Close"><Icon name="close" /></button>
+      </div>
+      <ul class="sheet__lines" data-lines></ul>
+      <label class="sheet__note">Anything for the kitchen?
+        <textarea rows="2" maxlength="200" placeholder="Less spicy, extra salna, no onion…" data-note></textarea>
+      </label>
+      <div class="sheet__foot">
+        <div class="sheet__sum"><span>Total</span><b data-sheet-total>₹0</b></div>
+        <button type="button" class="btn sheet__place" data-place>Send to kitchen <Icon name="arrow" /></button>
+        <p class="sheet__fine">Taxes as applicable. You pay after your meal.</p>
+      </div>
+    </dialog>
+
+    <div class="toast" data-toast role="status" aria-live="polite"></div>
+  </div>
+</Base>
+
+<style>
+  .order {
+    padding-top: var(--nav-h);
+    min-height: 100svh;
+  }
+  [hidden] {
+    display: none !important;
+  }
+  /* pick */
+  .pick {
+    display: grid;
+    grid-template-columns: 0.8fr 1.2fr;
+    align-items: center;
+    gap: 30px;
+    min-height: calc(100svh - var(--nav-h));
+    padding-block: 30px;
+  }
+  .pick__art {
+    width: min(100%, 360px);
+    justify-self: center;
+  }
+  .pick__card,
+  .status__card {
+    background: var(--surface);
+    border-radius: var(--radius);
+    padding: clamp(24px, 4vw, 44px);
+    box-shadow: var(--shadow-pop);
+  }
+  .pick h1 {
+    font-size: var(--step-3);
+    margin: 14px 0 10px;
+    color: var(--maroon-900);
+  }
+  form {
+    display: grid;
+    gap: 14px;
+    margin-top: 22px;
+  }
+  label {
+    display: grid;
+    gap: 6px;
+    font-weight: 600;
+    font-size: 0.92rem;
+  }
+  select,
+  input,
+  textarea {
+    border: 1.5px solid var(--line);
+    background: var(--cream-50);
+    border-radius: var(--radius-sm);
+    padding: 12px 14px;
+    font-weight: 500;
+    font-size: 1rem;
+  }
+  select:focus,
+  input:focus,
+  textarea:focus {
+    outline: none;
+    border-color: var(--gold-500);
+  }
+
+  /* join with PIN */
+  .pin-input {
+    width: 100%;
+    min-width: 0;
+    font-family: var(--font-mono);
+    font-size: 1.6rem;
+    letter-spacing: 0.5em;
+    text-align: center;
+    padding-left: calc(14px + 0.5em);
+  }
+  .join__err {
+    margin: 0;
+    color: var(--red-600);
+    font-weight: 600;
+    font-size: 0.92rem;
+  }
+  .join__ask {
+    color: var(--maroon-900);
+  }
+  .pinline {
+    margin: 18px 0 0;
+    padding: 12px 14px;
+    border: 1.5px dashed var(--line);
+    border-radius: var(--radius-sm);
+    font-size: 0.9rem;
+    color: var(--text-soft);
+  }
+  .pinline span {
+    display: block;
+    font-weight: 600;
+    color: var(--maroon-900);
+  }
+  .pinline b {
+    font-family: var(--font-mono);
+    font-size: 1.2rem;
+    letter-spacing: 0.18em;
+  }
+
+  /* table bar */
+  .tablebar {
+    background: var(--maroon-900);
+    color: var(--cream-50);
+    position: sticky;
+    top: 0;
+    z-index: 20;
+  }
+  .tablebar__inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    min-height: 58px;
+  }
+  .tablebar__who {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    font-weight: 600;
+  }
+  .tablebar__badge {
+    background: var(--gold-500);
+    color: var(--maroon-900);
+    padding: 4px 12px;
+    border-radius: 999px;
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+  }
+  .demo {
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    border: 1px dashed var(--gold-300);
+    color: var(--gold-300);
+    padding: 2px 8px;
+    border-radius: 999px;
+  }
+  .tablebar__waiter {
+    min-height: 40px;
+    font-size: 0.88rem;
+    color: var(--cream-50);
+    padding: 0 14px;
+  }
+  .order__menu {
+    padding-bottom: 130px;
+  }
+  .order__menu :global(.mb__bar) {
+    top: 58px;
+  }
+  .tablebar,
+  .order__menu :global(.mb__bar) {
+    transition: top 0.5s var(--ease-out);
+  }
+  :global(.nav:not(.is-hidden) ~ main) .tablebar {
+    top: var(--nav-h);
+  }
+  :global(.nav:not(.is-hidden) ~ main) .order__menu :global(.mb__bar) {
+    top: calc(var(--nav-h) + 58px);
+  }
+
+  /* cart bar */
+  .cartbar {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    padding: 12px var(--gutter) calc(12px + env(safe-area-inset-bottom));
+    z-index: 30;
+    pointer-events: none;
+    animation: up 0.5s var(--ease-spring);
+  }
+  @keyframes up {
+    from {
+      transform: translateY(100%);
+    }
+  }
+  .cartbar__btn {
+    pointer-events: auto;
+    width: min(100%, 640px);
+    margin-inline: auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    background: var(--red-600);
+    color: #fff;
+    border: 0;
+    border-radius: 18px;
+    min-height: 60px;
+    padding: 0 20px;
+    font-weight: 650;
+    box-shadow: 0 20px 40px -14px rgb(163 15 26 / 0.7);
+  }
+  .cartbar__btn span {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .cartbar__btn :global(svg) {
+    width: 18px;
+  }
+  .cartbar__btn.bump {
+    animation: bump 0.4s var(--ease-spring);
+  }
+  @keyframes bump {
+    40% {
+      transform: scale(1.04);
+    }
+  }
+
+  /* sheet */
+  .sheet {
+    border: 0;
+    padding: 0;
+    width: min(100%, 560px);
+    max-height: 88svh;
+    margin: auto auto 0;
+    border-radius: 26px 26px 0 0;
+    background: var(--cream-50);
+    color: var(--ink);
+    box-shadow: 0 -20px 60px rgb(0 0 0 / 0.3);
+    display: none;
+    flex-direction: column;
+  }
+  .sheet[open] {
+    display: flex;
+    animation: up 0.45s var(--ease-out);
+  }
+  .sheet::backdrop {
+    background: rgb(34 6 10 / 0.55);
+    backdrop-filter: blur(3px);
+  }
+  @media (min-width: 700px) {
+    .sheet {
+      margin: auto;
+      border-radius: 26px;
+    }
+  }
+  .sheet__head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 22px 10px;
+  }
+  .sheet__head h2 {
+    font-size: var(--step-2);
+    color: var(--maroon-900);
+  }
+  .sheet__x {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    border: 0;
+    background: var(--cream-200);
+    display: grid;
+    place-items: center;
+  }
+  .sheet__x :global(svg) {
+    width: 20px;
+  }
+  .sheet__lines {
+    list-style: none;
+    margin: 0;
+    padding: 0 22px;
+    overflow: auto;
+    flex: 1;
+  }
+  .sheet__lines :global(li) {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .sheet__lines :global(.ln__name) {
+    flex: 1;
+    font-weight: 600;
+  }
+  .sheet__lines :global(.ln__price) {
+    font-family: var(--font-mono);
+    font-weight: 600;
+    color: var(--red-700);
+    min-width: 64px;
+    text-align: right;
+  }
+  .sheet__lines :global(.ln__ctrl) {
+    display: inline-flex;
+    align-items: center;
+    border: 1.5px solid var(--line);
+    border-radius: 999px;
+  }
+  .sheet__lines :global(.ln__ctrl button) {
+    width: 34px;
+    height: 34px;
+    border: 0;
+    background: none;
+    font-size: 1.1rem;
+    font-weight: 700;
+  }
+  .sheet__lines :global(.ln__ctrl span) {
+    min-width: 18px;
+    text-align: center;
+    font-family: var(--font-mono);
+  }
+  .sheet__note {
+    padding: 14px 22px 0;
+  }
+  .sheet__foot {
+    padding: 16px 22px calc(18px + env(safe-area-inset-bottom));
+  }
+  .sheet__sum {
+    display: flex;
+    justify-content: space-between;
+    font-size: 1.2rem;
+    margin-bottom: 12px;
+  }
+  .sheet__sum b {
+    font-family: var(--font-mono);
+  }
+  .sheet__place {
+    width: 100%;
+    min-height: 56px;
+  }
+  .sheet__place[disabled] {
+    opacity: 0.6;
+  }
+  .sheet__fine {
+    text-align: center;
+    color: var(--text-soft);
+    font-size: 0.8rem;
+    margin-top: 10px;
+  }
+
+  /* status tracker */
+  .track {
+    list-style: none;
+    padding: 0;
+    margin: 26px 0;
+    display: grid;
+    gap: 0;
+  }
+  .track li {
+    display: grid;
+    grid-template-columns: 28px 1fr;
+    column-gap: 14px;
+    padding-bottom: 22px;
+    position: relative;
+    opacity: 0.45;
+    transition: opacity 0.5s;
+  }
+  .track li::before {
+    content: "";
+    position: absolute;
+    left: 13px;
+    top: 26px;
+    bottom: 0;
+    width: 2px;
+    background: var(--line);
+  }
+  .track li:last-child::before {
+    display: none;
+  }
+  .track i {
+    grid-row: span 2;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: 2px solid var(--line);
+    background: var(--cream-50);
+  }
+  .track li.done,
+  .track li.now {
+    opacity: 1;
+  }
+  .track li.done i {
+    background: var(--leaf) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3' stroke-linecap='round'%3E%3Cpath d='M6 12.5l4 4L18 8'/%3E%3C/svg%3E") center/16px no-repeat;
+    border-color: var(--leaf);
+  }
+  .track li.now i {
+    border-color: var(--red-600);
+    box-shadow: 0 0 0 6px rgb(200 20 31 / 0.15);
+    animation: pulse 1.4s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    50% {
+      box-shadow: 0 0 0 10px rgb(200 20 31 / 0.05);
+    }
+  }
+  .track span {
+    color: var(--text-soft);
+    font-size: 0.9rem;
+  }
+  .status__total b {
+    font-family: var(--font-mono);
+  }
+  .status__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 20px;
+  }
+  .status__actions .btn--ghost {
+    color: var(--maroon-900);
+  }
+
+  /* ---------- visit: live orders + running bill + feedback */
+  .visit {
+    display: grid;
+    grid-template-columns: 1.15fr 0.85fr;
+    align-items: start;
+    gap: 22px;
+    padding-block: 30px 60px;
+  }
+  .visit__main {
+    display: grid;
+    gap: 22px;
+  }
+  .visit h1 {
+    font-size: var(--step-3);
+    margin: 12px 0 4px;
+    color: var(--maroon-900);
+  }
+  .visit h2 {
+    font-size: var(--step-2);
+    color: var(--maroon-900);
+  }
+  .bill {
+    position: sticky;
+    top: calc(var(--nav-h) + 16px);
+  }
+  .bill__head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 14px;
+  }
+  .bill__state {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: var(--cream-200);
+    color: var(--maroon-900);
+  }
+  .bill__state.is-asked {
+    background: var(--gold-500);
+  }
+  .bill__state.is-paid {
+    background: var(--leaf);
+    color: #fff;
+  }
+  .bill__orders :global(.bo) {
+    padding: 12px 0;
+    border-bottom: 1px dashed var(--line);
+  }
+  .bill__orders :global(.bo--x) {
+    opacity: 0.45;
+    text-decoration: line-through;
+  }
+  .bill__orders :global(.bo__head) {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.85rem;
+    color: var(--text-soft);
+    margin-bottom: 6px;
+  }
+  .bill__orders :global(.bo__head b) {
+    font-family: var(--font-mono);
+    color: var(--maroon-900);
+  }
+  .bill__orders :global(.chip) {
+    margin-left: auto;
+    font-style: normal;
+    font-size: 0.72rem;
+    font-weight: 650;
+    padding: 2px 9px;
+    border-radius: 999px;
+    background: var(--cream-200);
+  }
+  .bill__orders :global(.chip--preparing) {
+    background: #ffe2b8;
+  }
+  .bill__orders :global(.chip--ready) {
+    background: var(--gold-500);
+  }
+  .bill__orders :global(.chip--served) {
+    background: color-mix(in oklab, var(--leaf) 22%, white);
+  }
+  .bill__orders :global(ul) {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 4px;
+  }
+  .bill__orders :global(li),
+  .bill__sum div {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .bill__orders :global(li span:last-child),
+  .bill__sum dd {
+    font-family: var(--font-mono);
+  }
+  .bill__sum {
+    margin: 14px 0 0;
+    display: grid;
+    gap: 6px;
+  }
+  .bill__sum dt {
+    color: var(--text-soft);
+  }
+  .bill__sum dd {
+    margin: 0;
+  }
+  .bill__total {
+    border-top: 2px solid var(--maroon-900);
+    padding-top: 10px;
+    margin-top: 4px;
+    font-size: 1.25rem;
+    font-weight: 700;
+  }
+  .bill__total dt {
+    color: var(--maroon-900);
+  }
+  .bill__note {
+    font-size: 0.9rem;
+    color: var(--text-soft);
+    margin-top: 14px;
+  }
+  .bill__ask {
+    width: 100%;
+    margin-top: 14px;
+  }
+
+  /* feedback */
+  .fb form {
+    display: grid;
+    gap: 14px;
+    margin: 0;
+  }
+  .stars {
+    display: flex;
+    gap: 2px;
+  }
+  .stars button {
+    border: 0;
+    background: none;
+    padding: 2px;
+    font-size: 1.6rem;
+    line-height: 1;
+    color: var(--cream-200);
+    -webkit-text-stroke: 1px color-mix(in oklab, var(--gold-500) 70%, var(--maroon-900));
+    transition: transform 0.2s var(--ease-spring), color 0.2s;
+  }
+  .stars--big button {
+    font-size: 2.6rem;
+  }
+  .stars button.on {
+    color: var(--gold-500);
+  }
+  .stars button:active {
+    transform: scale(1.25);
+  }
+  .fb__more {
+    display: grid;
+    gap: 14px;
+  }
+  .fb__row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-weight: 600;
+  }
+  .fb__pair {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  .opt {
+    color: var(--text-soft);
+    font-weight: 400;
+  }
+  .fb__thanks {
+    text-align: center;
+    display: grid;
+    justify-items: center;
+    gap: 10px;
+  }
+  .fb__thanks img {
+    width: 150px;
+    height: auto;
+  }
+  .fb__google {
+    margin-top: 6px;
+  }
+  @media (max-width: 860px) {
+    .visit {
+      grid-template-columns: 1fr;
+    }
+    .bill {
+      position: static;
+    }
+  }
+
+  /* sold out (set live by the kitchen) */
+  .order :global(.step.is-soldout) {
+    opacity: 0.55;
+  }
+  .order :global(.step.is-soldout .step__add) {
+    background: var(--cream-200);
+    color: var(--text-soft);
+    cursor: not-allowed;
+  }
+
+  .toast {
+    position: fixed;
+    left: 50%;
+    bottom: 96px;
+    translate: -50% 20px;
+    background: var(--maroon-900);
+    color: var(--cream-50);
+    padding: 12px 18px;
+    border-radius: 999px;
+    font-weight: 600;
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.4s var(--ease-spring);
+    z-index: 60;
+    white-space: nowrap;
+  }
+  .toast.show {
+    opacity: 1;
+    translate: -50% 0;
+  }
+  @media (max-width: 760px) {
+    .pick {
+      grid-template-columns: 1fr;
+      align-content: start;
+    }
+    .pick__art {
+      width: 170px;
+      margin-bottom: -40px;
+      position: relative;
+      z-index: 1;
+    }
+    .tablebar__waiter {
+      font-size: 0.8rem;
+    }
+    .tablebar__inner {
+      height: 58px;
+      flex-wrap: nowrap;
+    }
+    .tablebar__who {
+      flex-wrap: nowrap;
+      min-width: 0;
+    }
+    [data-branch-name] {
+      display: none;
+    }
+  }
+</style>
+
+<script>
+  import { orderApi } from "../lib/order/api";
+  import { friendlyError } from "../lib/supabase";
+  import type { CartLine, OrderStage, Visit } from "../lib/order/types";
+
+  type BranchInfo = { id: string; name: string; tables: number; maps: string };
+  const root = document.querySelector<HTMLElement>("[data-order]")!;
+  const branches: BranchInfo[] = JSON.parse(root.dataset.branches!);
+  const $ = <T extends Element = HTMLElement>(s: string) => root.querySelector<T>(s)!;
+  const $$ = <T extends Element = HTMLElement>(s: string) => [...root.querySelectorAll<T>(s)];
+  const rupee = (n: number) => "₹" + Number(n).toLocaleString("en-IN", { maximumFractionDigits: 2 });
+  const esc = (t: string) => t.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
+
+  const params = new URLSearchParams(location.search);
+  const branchId = params.get("branch") || "";
+  const table = (params.get("table") || "").slice(0, 6);
+  const branch = branches.find((b) => b.id === branchId);
+  const show = (v: "pick" | "join" | "menu" | "status") => $$("[data-view]").forEach((el) => (el.hidden = el.dataset.view !== v));
+
+  const toast = (msg: string) => {
+    const t = $("[data-toast]");
+    t.textContent = msg;
+    t.classList.add("show");
+    clearTimeout((t as any)._t);
+    (t as any)._t = setTimeout(() => t.classList.remove("show"), 2600);
+  };
+
+  // ---------- step 1
+  if (!branch || !table) {
+    show("pick");
+    if (branchId) $<HTMLSelectElement>("select[name=branch]").value = branchId;
+    $<HTMLFormElement>("[data-pick-form]").addEventListener("submit", (e) => {
+      e.preventDefault();
+      const f = new FormData(e.target as HTMLFormElement);
+      location.search = `?branch=${f.get("branch")}&table=${encodeURIComponent(String(f.get("table")).trim())}`;
+    });
+  } else {
+    startOrdering(branch);
+  }
+
+  function startOrdering(branch: BranchInfo) {
+    const KEY = `pd-cart-${branch.id}-${table}`;
+    const VISIT = `pd-visit-${branch.id}-${table}`; // this phone's token for the table's open bill
+    const store = {
+      get(k: string) {
+        try {
+          return localStorage.getItem(k);
+        } catch {
+          return null;
+        }
+      },
+      set(k: string, v: string | null) {
+        try {
+          if (v === null) localStorage.removeItem(k);
+          else localStorage.setItem(k, v);
+        } catch {}
+      },
+    };
+    let cart: Record<string, CartLine> = {};
+    try {
+      cart = JSON.parse(store.get(KEY) || "{}");
+    } catch {}
+    let token = store.get(VISIT);
+
+    $("[data-table-no]").textContent = table;
+    $("[data-branch-name]").textContent = `Hotel Pandia's, ${branch.name}`;
+    $("[data-v-table]").textContent = table;
+    $("[data-v-branch]").textContent = branch.name;
+    $("[data-j-table]").textContent = table;
+    $("[data-j-branch]").textContent = branch.name;
+    if (orderApi.mode === "mock") $("[data-demo]").hidden = false;
+
+    const save = () => store.set(KEY, JSON.stringify(cart));
+    const steppers = $$("[data-step]");
+
+    const render = () => {
+      let count = 0;
+      let total = 0;
+      for (const l of Object.values(cart)) {
+        count += l.qty;
+        total += l.qty * l.price;
+      }
+      steppers.forEach((s) => {
+        const q = cart[s.dataset.step!]?.qty || 0;
+        s.querySelector<HTMLElement>("[data-add]")!.hidden = q > 0;
+        s.querySelector<HTMLElement>(".step__ctrl")!.hidden = q === 0;
+        s.querySelector("[data-qty]")!.textContent = String(q);
+      });
+      $("[data-cartbar]").hidden = count === 0 || $("[data-view=menu]").hidden;
+      $("[data-count]").textContent = String(count);
+      $("[data-total]").textContent = rupee(total);
+      $("[data-sheet-total]").textContent = rupee(total);
+      const lines = $("[data-lines]");
+      lines.innerHTML = "";
+      for (const l of Object.values(cart)) {
+        const li = document.createElement("li");
+        li.innerHTML = `<span class="ln__name"></span><span class="ln__ctrl"><button type="button" data-l-dec aria-label="Remove one">−</button><span>${l.qty}</span><button type="button" data-l-inc aria-label="Add one">+</button></span><span class="ln__price">${rupee(l.qty * l.price)}</span>`;
+        li.querySelector(".ln__name")!.textContent = l.name;
+        li.querySelector("[data-l-dec]")!.addEventListener("click", () => change(l.dishId, -1));
+        li.querySelector("[data-l-inc]")!.addEventListener("click", () => change(l.dishId, 1));
+        lines.append(li);
+      }
+      if (count === 0 && sheet.open) sheet.close();
+    };
+
+    // live prices + sold-out flags from the kitchen (keeps the printed menu if offline)
+    orderApi
+      .menuOverrides()
+      .then((ov) => {
+        for (const s of steppers) {
+          const o = ov[s.dataset.step!];
+          if (!o) continue;
+          s.dataset.price = String(o.price);
+          const lbl = s.querySelector(".step__label b");
+          if (lbl) lbl.textContent = rupee(o.price);
+          const add = s.querySelector<HTMLButtonElement>("[data-add]")!;
+          if (!o.available) {
+            s.classList.add("is-soldout");
+            add.textContent = "Sold out";
+            add.disabled = true;
+            delete cart[s.dataset.step!];
+          } else if (cart[s.dataset.step!]) cart[s.dataset.step!].price = o.price;
+        }
+        save();
+        render();
+      })
+      .catch(() => {});
+
+    const change = (id: string, d: number, el?: HTMLElement) => {
+      const s = el || steppers.find((x) => x.dataset.step === id)!;
+      if (d > 0 && s.classList.contains("is-soldout")) return;
+      const line = cart[id] || { dishId: id, name: s.dataset.name!, price: Number(s.dataset.price), qty: 0 };
+      line.qty = Math.max(0, Math.min(30, line.qty + d));
+      if (line.qty === 0) delete cart[id];
+      else cart[id] = line;
+      save();
+      render();
+      if (d > 0) {
+        const btn = $("[data-open-cart]");
+        btn.classList.remove("bump");
+        void btn.offsetWidth;
+        btn.classList.add("bump");
+        navigator.vibrate?.(8);
+      }
+    };
+
+    steppers.forEach((s) => {
+      const id = s.dataset.step!;
+      s.querySelector("[data-add]")!.addEventListener("click", () => change(id, 1, s));
+      s.querySelector("[data-inc]")!.addEventListener("click", () => change(id, 1, s));
+      s.querySelector("[data-dec]")!.addEventListener("click", () => change(id, -1, s));
+    });
+
+    const sheet = $<HTMLDialogElement>("[data-sheet]");
+    $("[data-open-cart]").addEventListener("click", () => sheet.showModal());
+    $("[data-close]").addEventListener("click", () => sheet.close());
+    sheet.addEventListener("click", (e) => {
+      if (e.target === sheet) sheet.close();
+    });
+
+    $<HTMLButtonElement>("[data-place]").addEventListener("click", async (e) => {
+      const btn = e.currentTarget as HTMLButtonElement;
+      const lines = Object.values(cart);
+      if (!lines.length || btn.disabled) return;
+      btn.disabled = true;
+      btn.textContent = "Sending…";
+      try {
+        const receipt = await orderApi.placeOrder({
+          branchId: branch.id,
+          table,
+          lines,
+          note: $<HTMLTextAreaElement>("[data-note]").value.trim() || undefined,
+          sessionToken: token || undefined,
+        });
+        token = receipt.sessionToken;
+        store.set(VISIT, token);
+        cart = {};
+        $<HTMLTextAreaElement>("[data-note]").value = "";
+        save();
+        sheet.close();
+        openVisit();
+        toast(`Order ${receipt.code} is with the kitchen`);
+      } catch (err) {
+        console.error(err);
+        if (String((err as { message?: string })?.message).includes("table_busy")) {
+          // someone else's bill is open on this table (or ours was closed and a new party sat down)
+          sheet.close();
+          showJoin();
+        } else toast(friendlyError(err));
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "Send to kitchen";
+      }
+    });
+
+    $("[data-order-more]").addEventListener("click", () => {
+      clearInterval(poll);
+      show("menu");
+      render();
+      scrollTo({ top: 0 });
+    });
+
+    $$("[data-waiter]").forEach((b) =>
+      b.addEventListener("click", async () => {
+        try {
+          await orderApi.callWaiter(branch.id, table);
+          toast("A server is on the way to table " + table);
+        } catch (err) {
+          toast(friendlyError(err));
+        }
+      })
+    );
+
+    // ---------- the visit: orders, running bill, feedback
+    let poll: number | undefined;
+    let visit: Visit | null = null;
+    let fbJustSent = false;
+    const stageOrder: OrderStage[] = ["received", "preparing", "ready", "served"];
+    const titles: Record<string, string> = {
+      received: "Got it! Your order is in.",
+      preparing: "The kitchen is on it.",
+      ready: "Coming to your table.",
+      served: "Served. Enjoy!",
+    };
+    const chip: Record<string, string> = {
+      received: "Received",
+      preparing: "Cooking",
+      ready: "On its way",
+      served: "Served",
+      cancelled: "Cancelled",
+    };
+
+    function paintVisit(v: Visit) {
+      visit = v;
+      const live = v.orders.filter((o) => o.status !== "cancelled");
+      // the tracker follows the least-advanced order still in flight
+      const pending = live.filter((o) => o.status !== "served");
+      const focus = pending.length
+        ? pending.reduce((a, b) => (stageOrder.indexOf(a.status) <= stageOrder.indexOf(b.status) ? a : b))
+        : live[live.length - 1];
+      const stage = focus?.status || "served";
+      const idx = stageOrder.indexOf(stage);
+      $$("[data-stage]").forEach((li, i) => {
+        li.classList.toggle("done", i < idx || stage === "served");
+        li.classList.toggle("now", i === idx && stage !== "served");
+      });
+      const billing = v.status !== "open";
+      const paid = v.status === "paid" || v.status === "closed";
+      $("[data-status-title]").textContent = paid
+        ? "All paid. Thank you!"
+        : billing
+          ? "Your bill is on its way."
+          : titles[stage];
+      $("[data-track]").hidden = billing && !pending.length;
+
+      $("[data-bill-orders]").innerHTML = v.orders
+        .map(
+          (o) => `<div class="bo ${o.status === "cancelled" ? "bo--x" : ""}">
+            <div class="bo__head"><b>#${esc(o.code)}</b><span>${new Date(o.createdAt).toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit" })}</span><em class="chip chip--${o.status}">${chip[o.status]}</em></div>
+            <ul>${(o.items || []).map((i) => `<li><span>${i.qty} × ${esc(i.name)}</span><span>${rupee(i.qty * i.price)}</span></li>`).join("")}</ul>
+          </div>`
+        )
+        .join("");
+      $("[data-b-sub]").textContent = rupee(v.subtotal);
+      $("[data-b-disc-row]").hidden = !Number(v.discount);
+      $("[data-b-disc]").textContent = "−" + rupee(v.discount);
+      $("[data-b-rate]").textContent = String(Number(v.taxPercent));
+      $("[data-b-tax]").textContent = rupee(v.tax);
+      $("[data-b-total]").textContent = rupee(v.total);
+      const state = $("[data-bill-state]");
+      state.textContent = paid ? "Paid" : billing ? "Bill requested" : "Open";
+      state.className = `bill__state ${paid ? "is-paid" : billing ? "is-asked" : ""}`;
+      $("[data-ask-bill]").hidden = billing;
+      $("[data-bill-note]").textContent = paid
+        ? `Paid ${rupee(v.paid)}. See you again soon!`
+        : billing
+          ? "Your server is bringing the bill. Pay at the counter or to them: cash, card or UPI."
+          : "Order as much as you like. Pay once at the end: cash, card or UPI.";
+      $("[data-order-more]").hidden = v.status === "closed";
+      const live2 = v.status === "open" || v.status === "bill_requested";
+      $("[data-pin-row]").hidden = !(v.pin && live2);
+      if (v.pin) $("[data-pin]").textContent = v.pin;
+
+      // feedback appears as the meal wraps up (bill asked, paid, or everything served)
+      const wrapUp = billing || (live.length > 0 && !pending.length);
+      if (wrapUp) $("[data-fb]").hidden = false;
+      if (v.feedbackGiven && !fbJustSent && !$("[data-fb-form]").hidden) showThanks(null);
+    }
+
+    async function refresh() {
+      if (!token) return;
+      try {
+        const v = await orderApi.getVisit(token);
+        if (!v) {
+          // the visit is gone (e.g. demo data cleared): start clean
+          store.set(VISIT, null);
+          token = null;
+          clearInterval(poll);
+          show("menu");
+          render();
+          return;
+        }
+        paintVisit(v);
+        if (v.status === "closed") clearInterval(poll);
+      } catch {}
+    }
+
+    function openVisit() {
+      show("status");
+      render();
+      scrollTo({ top: 0 });
+      clearInterval(poll);
+      refresh();
+      poll = window.setInterval(refresh, 5000);
+    }
+
+    $("[data-ask-bill]").addEventListener("click", async (e) => {
+      const b = e.currentTarget as HTMLButtonElement;
+      if (!token) return;
+      b.disabled = true;
+      try {
+        const v = await orderApi.requestBill(token);
+        if (v) paintVisit(v);
+        toast("We've told your server. The bill is on its way.");
+        $("[data-fb]").scrollIntoView({ behavior: "smooth", block: "center" });
+      } catch (err) {
+        toast(friendlyError(err));
+      } finally {
+        b.disabled = false;
+      }
+    });
+
+    // ---------- feedback
+    const ratings: Record<string, number> = {};
+    $$("[data-stars]").forEach((group) => {
+      const key = group.dataset.stars!;
+      const btns = [...group.querySelectorAll<HTMLButtonElement>("button")];
+      btns.forEach((b) =>
+        b.addEventListener("click", () => {
+          const n = Number(b.dataset.v);
+          ratings[key] = n;
+          btns.forEach((x, i) => {
+            x.classList.toggle("on", i < n);
+            x.setAttribute("aria-checked", String(i === n - 1));
+          });
+          if (key === "rating") $("[data-fb-more]").hidden = false;
+        })
+      );
+    });
+
+    const googleBtn = $<HTMLAnchorElement>("[data-google]");
+    function showThanks(url: string | null) {
+      $("[data-fb-form]").hidden = true;
+      $("[data-fb-thanks]").hidden = false;
+      const low = (ratings.rating || 5) <= 3;
+      $("[data-fb-title]").textContent = low ? "Thank you for telling us." : "Thank you!";
+      $("[data-fb-msg]").textContent = low
+        ? "Your note has gone straight to the manager, and we'll make it right. You can also review us on Google if you like."
+        : "Enjoyed it? A Google review helps other biryani lovers find us. It takes 30 seconds.";
+      // every guest gets the same Google button, whatever they rated (Google policy: no review gating)
+      googleBtn.href = url || visit?.googleReviewUrl || branch.maps;
+    }
+    googleBtn.addEventListener("click", () => {
+      if (token) orderApi.googleClicked(token).catch(() => {});
+    });
+
+    $<HTMLFormElement>("[data-fb-form]").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      if (!token || !ratings.rating) return;
+      const form = e.target as HTMLFormElement;
+      const f = new FormData(form);
+      const btn = form.querySelector<HTMLButtonElement>("button[type=submit]")!;
+      btn.disabled = true;
+      try {
+        const r = await orderApi.submitFeedback(token, {
+          rating: ratings.rating,
+          food: ratings.food,
+          service: ratings.service,
+          comment: String(f.get("comment") || "").trim() || undefined,
+          name: String(f.get("name") || "").trim() || undefined,
+          phone: String(f.get("phone") || "").trim() || undefined,
+        });
+        fbJustSent = true;
+        showThanks(r.googleReviewUrl);
+      } catch (err) {
+        toast(friendlyError(err));
+      } finally {
+        btn.disabled = false;
+      }
+    });
+
+    // ---------- join an open bill with the table PIN
+    const joinForm = $<HTMLFormElement>("[data-join-form]");
+    const joinErr = $("[data-join-err]");
+    function showJoin() {
+      store.set(VISIT, null);
+      token = null;
+      clearInterval(poll);
+      joinErr.hidden = true;
+      joinForm.reset();
+      show("join");
+      scrollTo({ top: 0 });
+    }
+    joinForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const pin = String(new FormData(joinForm).get("pin") || "").trim();
+      const btn = joinForm.querySelector<HTMLButtonElement>("button[type=submit]")!;
+      btn.disabled = true;
+      joinErr.hidden = true;
+      try {
+        const r = await orderApi.joinTable(branch.id, table, pin);
+        if (r.ok) {
+          token = r.token;
+          store.set(VISIT, token);
+          openVisit();
+          toast("You're in. Orders from this phone go on the table's bill.");
+          return;
+        }
+        if (r.error === "no_open_bill") {
+          // the bill was closed meanwhile: the table is free, start fresh
+          show("menu");
+          render();
+          toast("This table's bill is closed. Start a new order.");
+          return;
+        }
+        joinErr.textContent =
+          r.error === "locked"
+            ? `Too many tries. Ask your server, or try again in ${Math.ceil((r.retryInSeconds || 900) / 60)} min.`
+            : `That PIN doesn't match.${r.triesLeft ? ` ${r.triesLeft} ${r.triesLeft === 1 ? "try" : "tries"} left.` : ""}`;
+        joinErr.hidden = false;
+        joinForm.querySelector<HTMLInputElement>("[name=pin]")!.select();
+      } catch (err) {
+        toast(friendlyError(err));
+      } finally {
+        btn.disabled = false;
+      }
+    });
+
+    // a phone without the key: if someone's bill is open here, ask for the PIN first
+    function startFresh() {
+      Promise.race([orderApi.tableBusy(branch.id, table), new Promise<boolean>((r) => setTimeout(() => r(false), 2500))])
+        .catch(() => false)
+        .then((busy) => (busy ? showJoin() : show("menu")));
+    }
+
+    render();
+    if (!token) startFresh();
+    else
+      // back on this page (refresh, reopened tab): resume the bill, unless that visit is already over
+      orderApi
+        .getVisit(token)
+        .then((v) => {
+          if (v && v.status !== "closed") return openVisit();
+          store.set(VISIT, null);
+          token = null;
+          startFresh();
+        })
+        .catch(() => openVisit()); // offline for a moment: show what we can, polling catches up
+  }
+</script>

@@ -1,0 +1,674 @@
+---
+import Staff from "../../layouts/Staff.astro";
+import Icon from "../../components/Icon.astro";
+---
+<Staff title="Desk">
+  <div class="desk">
+    <div class="desk__left">
+      <div class="shead">
+        <h1>Tables</h1>
+        <span class="grow"></span>
+        <div class="legend">
+          <span><i class="lg lg--free"></i>Free</span>
+          <span><i class="lg lg--open"></i>Eating</span>
+          <span><i class="lg lg--bill"></i>Wants bill</span>
+          <span><i class="lg lg--paid"></i>Paid</span>
+        </div>
+        <button type="button" class="sbtn sbtn--sm" data-sound><Icon name="volume" /> <span>Sound</span></button>
+      </div>
+
+      <div class="calls" data-calls hidden></div>
+      <div class="tables" data-tables></div>
+      <p class="muted desk__sum" data-sum></p>
+    </div>
+
+    <aside class="scard panel" data-panel>
+      <div class="empty" data-panel-empty>
+        <Icon name="table" size={40} />
+        <p>Tap a table to see its bill.</p>
+      </div>
+      <div data-panel-body hidden>
+        <div class="panel__head">
+          <div>
+            <p class="eyebrow">Table</p>
+            <h2 data-p-table></h2>
+          </div>
+          <span class="pill" data-p-state></span>
+        </div>
+        <p class="muted" data-p-since></p>
+        <div class="porders" data-p-orders></div>
+        <dl class="psum">
+          <div><dt>Subtotal</dt><dd data-p-sub></dd></div>
+          <div data-p-disc-row><dt>Discount</dt><dd data-p-disc></dd></div>
+          <div><dt>GST <span data-p-rate></span>%</dt><dd data-p-tax></dd></div>
+          <div class="psum__total"><dt>Total</dt><dd data-p-total></dd></div>
+          <div data-p-paid-row><dt>Paid</dt><dd data-p-paid></dd></div>
+        </dl>
+
+        <div class="pdisc" data-p-discbox hidden>
+          <input class="sinput" type="number" min="0" step="1" inputmode="numeric" placeholder="Discount ₹" data-p-discin aria-label="Discount in rupees" />
+          <button type="button" class="sbtn sbtn--sm" data-p-discgo>Apply</button>
+        </div>
+
+        <div class="ppay" data-p-pay>
+          <p class="ppay__due">Collect <b data-p-due></b></p>
+          <div class="ppay__btns">
+            <button type="button" class="sbtn sbtn--green" data-pay="cash">Cash</button>
+            <button type="button" class="sbtn sbtn--green" data-pay="upi">UPI</button>
+            <button type="button" class="sbtn sbtn--green" data-pay="card">Card</button>
+          </div>
+        </div>
+        <div class="pfoot">
+          <button type="button" class="sbtn" data-print><Icon name="receipt" /> Print bill</button>
+          <button type="button" class="sbtn sbtn--primary" data-close-table>Close table</button>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <!-- printable bill (only shows when printing) -->
+  <div class="printbill" data-printbill></div>
+</Staff>
+
+<style>
+  .desk :global(.pin) {
+    font-family: var(--font-mono);
+    letter-spacing: 0.12em;
+    color: var(--text);
+  }
+  .desk {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 400px;
+    gap: 20px;
+    align-items: start;
+  }
+  @media (max-width: 980px) {
+    .desk {
+      grid-template-columns: 1fr;
+    }
+  }
+  .legend {
+    display: flex;
+    gap: 14px;
+    font-size: 0.82rem;
+    color: var(--s-soft);
+    flex-wrap: wrap;
+  }
+  .legend span {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .lg {
+    width: 12px;
+    height: 12px;
+    border-radius: 4px;
+  }
+  .lg--free {
+    background: #fff;
+    border: 1.5px solid var(--s-line);
+  }
+  .lg--open {
+    background: var(--gold-300);
+  }
+  .lg--bill {
+    background: var(--red-600);
+  }
+  .lg--paid {
+    background: var(--leaf);
+  }
+
+  .calls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+  .calls :global(.call) {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--red-600);
+    color: #fff;
+    border-radius: 14px;
+    padding: 8px 8px 8px 14px;
+    font-weight: 700;
+    animation: callIn 0.5s var(--ease-spring);
+  }
+  .calls :global(.call--bill) {
+    background: var(--maroon-900);
+  }
+  .calls :global(.call svg) {
+    width: 18px;
+  }
+  .calls :global(.call small) {
+    font-weight: 500;
+    opacity: 0.8;
+  }
+  .calls :global(.call button) {
+    min-height: 34px;
+    border-radius: 10px;
+    border: 0;
+    background: #fff;
+    color: var(--maroon-900);
+    font-weight: 700;
+    padding: 0 12px;
+    cursor: pointer;
+  }
+  @keyframes callIn {
+    from {
+      transform: scale(0.8);
+      opacity: 0;
+    }
+  }
+
+  .tables {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(118px, 1fr));
+    gap: 12px;
+  }
+  .tables :global(.tb) {
+    position: relative;
+    aspect-ratio: 1 / 0.86;
+    border-radius: 18px;
+    border: 1.5px solid var(--s-line);
+    background: #fff;
+    display: grid;
+    align-content: center;
+    justify-items: center;
+    gap: 4px;
+    cursor: pointer;
+    font: inherit;
+    color: var(--s-ink);
+    transition: transform 0.15s, box-shadow 0.2s;
+  }
+  .tables :global(.tb:hover) {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-soft);
+  }
+  .tables :global(.tb b) {
+    font-family: var(--font-display);
+    font-size: 1.9rem;
+    line-height: 1;
+  }
+  .tables :global(.tb span) {
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+  }
+  .tables :global(.tb small) {
+    font-size: 0.72rem;
+    font-weight: 600;
+    opacity: 0.8;
+  }
+  .tables :global(.tb--open) {
+    background: var(--gold-300);
+    border-color: var(--gold-500);
+  }
+  .tables :global(.tb--bill_requested) {
+    background: var(--red-600);
+    border-color: var(--red-600);
+    color: #fff;
+    animation: pulseT 1.6s ease-in-out infinite;
+  }
+  .tables :global(.tb--paid) {
+    background: var(--leaf);
+    border-color: var(--leaf);
+    color: #fff;
+  }
+  .tables :global(.tb.is-sel) {
+    outline: 3px solid var(--maroon-900);
+    outline-offset: 3px;
+  }
+  .tables :global(.tb__bell) {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: var(--maroon-900);
+    color: #fff;
+    display: grid;
+    place-items: center;
+  }
+  .tables :global(.tb__bell svg) {
+    width: 15px;
+  }
+  @keyframes pulseT {
+    50% {
+      box-shadow: 0 0 0 8px rgb(200 20 31 / 0.15);
+    }
+  }
+  .desk__sum {
+    margin-top: 16px;
+  }
+
+  /* panel */
+  .panel {
+    position: sticky;
+    top: 80px;
+    max-height: calc(100svh - 100px);
+    overflow: auto;
+  }
+  .panel__head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+  }
+  .panel h2 {
+    font-size: 2.4rem;
+    margin: 0;
+    line-height: 1;
+  }
+  .porders {
+    margin-top: 14px;
+  }
+  .porders :global(.po) {
+    border-top: 1px dashed var(--s-line);
+    padding: 10px 0;
+  }
+  .porders :global(.po--x) {
+    opacity: 0.45;
+  }
+  .porders :global(.po--x li) {
+    text-decoration: line-through;
+  }
+  .porders :global(.po__h) {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.82rem;
+    color: var(--s-soft);
+  }
+  .porders :global(.po__h b) {
+    font-family: var(--font-mono);
+    color: var(--s-ink);
+  }
+  .porders :global(.po__h .pill) {
+    margin-left: auto;
+  }
+  .porders :global(ul) {
+    list-style: none;
+    margin: 6px 0 0;
+    padding: 0;
+    display: grid;
+    gap: 3px;
+  }
+  .porders :global(li),
+  .psum div {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+  }
+  .porders :global(li span:last-child),
+  .psum dd {
+    font-family: var(--font-mono);
+  }
+  .porders :global(.po__x) {
+    border: 0;
+    background: none;
+    color: var(--red-600);
+    font-weight: 700;
+    cursor: pointer;
+    font-size: 0.78rem;
+    padding: 0;
+  }
+  .psum {
+    margin: 12px 0 0;
+    display: grid;
+    gap: 4px;
+  }
+  .psum dt {
+    color: var(--s-soft);
+  }
+  .psum dd {
+    margin: 0;
+  }
+  .psum__total {
+    border-top: 2px solid var(--s-ink);
+    margin-top: 4px;
+    padding-top: 8px;
+    font-size: 1.3rem;
+    font-weight: 800;
+  }
+  .psum__total dt {
+    color: var(--s-ink);
+  }
+  .pdisc {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+  }
+  .pdisc input {
+    flex: 1;
+    min-height: 38px;
+  }
+  .ppay {
+    margin-top: 16px;
+    background: var(--cream-100);
+    border-radius: 14px;
+    padding: 12px;
+  }
+  .ppay__due {
+    margin: 0 0 10px;
+    font-weight: 600;
+  }
+  .ppay__due b {
+    font-family: var(--font-mono);
+    font-size: 1.2rem;
+  }
+  .ppay__btns {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+  .ppay__btns .sbtn {
+    min-height: 52px;
+  }
+  .pfoot {
+    display: flex;
+    gap: 8px;
+    margin-top: 14px;
+  }
+  .pfoot .sbtn {
+    flex: 1;
+  }
+
+  /* print: only the bill */
+  .printbill {
+    display: none;
+  }
+  @media print {
+    :global(body > *:not(main)),
+    :global(.sbar),
+    .desk {
+      display: none !important;
+    }
+    .printbill {
+      display: block;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      width: 72mm;
+      margin: 0 auto;
+      color: #000;
+    }
+    .printbill :global(h3) {
+      text-align: center;
+      margin: 0 0 4px;
+      font-size: 15px;
+    }
+    .printbill :global(p) {
+      text-align: center;
+      margin: 0 0 6px;
+    }
+    .printbill :global(table) {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    .printbill :global(td) {
+      padding: 2px 0;
+      vertical-align: top;
+    }
+    .printbill :global(td:last-child) {
+      text-align: right;
+    }
+    .printbill :global(.tot td) {
+      border-top: 1px dashed #000;
+      font-weight: 700;
+      padding-top: 4px;
+    }
+  }
+</style>
+
+<script>
+  import { initStaffPage, sb, esc, rupee, time, minsSince, sound, act, toast } from "../../lib/staff";
+
+  type Session = {
+    id: string;
+    table_label: string;
+    status: "open" | "bill_requested" | "paid" | "closed";
+    subtotal: number;
+    tax: number;
+    discount: number;
+    total: number;
+    opened_at: string;
+    pin: string; // lets a guest's other phone join the bill
+  };
+  type Call = { id: number; table_label: string; kind: "waiter" | "bill"; created_at: string };
+
+  const page = await initStaffPage(["cashier", "manager", "admin"]);
+  const canDiscount = page.me.role === "manager" || page.me.role === "admin";
+  const canForceClose = canDiscount;
+  const $ = <T extends HTMLElement = HTMLElement>(s: string) => document.querySelector<T>(s)!;
+
+  let tables: string[] = [];
+  let sessions = new Map<string, Session>(); // by table label
+  let calls: Call[] = [];
+  let selected: string | null = null;
+  let taxRate = 5;
+
+  const STATE: Record<string, string> = { open: "Eating", bill_requested: "Wants bill", paid: "Paid", closed: "Closed" };
+
+  async function loadAll() {
+    const b = page.branch;
+    const [t, s, c, br] = await Promise.all([
+      sb().from("dining_tables").select("label").eq("branch_id", b).eq("active", true),
+      sb().from("table_sessions").select("id, table_label, status, subtotal, tax, discount, total, opened_at, pin").eq("branch_id", b).in("status", ["open", "bill_requested", "paid"]),
+      sb().from("service_calls").select("id, table_label, kind, created_at").eq("branch_id", b).is("resolved_at", null).order("created_at"),
+      sb().from("branches").select("tax_percent").eq("id", b).single(),
+    ]);
+    if (t.error || s.error || c.error) return toast("Couldn't load tables", "err");
+    tables = (t.data || []).map((r) => r.label).sort((a, b) => a.localeCompare(b, "en", { numeric: true }));
+    sessions = new Map((s.data as Session[]).map((r) => [r.table_label, r]));
+    calls = c.data as Call[];
+    taxRate = Number(br.data?.tax_percent ?? 5);
+    renderTables();
+    renderCalls();
+    if (selected) openPanel(selected);
+  }
+
+  function renderTables() {
+    const callBy = new Set(calls.filter((c) => c.kind === "waiter").map((c) => c.table_label));
+    $("[data-tables]").innerHTML = tables
+      .map((l) => {
+        const s = sessions.get(l);
+        return `<button type="button" class="tb ${s ? "tb--" + s.status : ""} ${selected === l ? "is-sel" : ""}" data-t="${esc(l)}">
+          ${callBy.has(l) ? `<i class="tb__bell" title="Calling a waiter"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15z"/><path d="M10 20a2 2 0 0 0 4 0"/></svg></i>` : ""}
+          <b>${esc(l)}</b>
+          ${s ? `<span>${rupee(s.total)}</span><small>${STATE[s.status]} · ${minsSince(s.opened_at)}m</small>` : `<small>Free</small>`}
+        </button>`;
+      })
+      .join("");
+    $("[data-tables]").querySelectorAll<HTMLButtonElement>("[data-t]").forEach((b) => b.addEventListener("click", () => openPanel(b.dataset.t!)));
+    const live = [...sessions.values()];
+    $("[data-sum]").textContent = `${live.length} of ${tables.length} tables busy · ${rupee(live.reduce((a, s) => a + Number(s.total), 0))} on open bills`;
+  }
+
+  function renderCalls() {
+    const box = $("[data-calls]");
+    box.hidden = !calls.length;
+    box.innerHTML = calls
+      .map(
+        (c) => `<div class="call call--${c.kind}">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15z"/><path d="M10 20a2 2 0 0 0 4 0"/></svg>
+          Table ${esc(c.table_label)} ${c.kind === "bill" ? "wants the bill" : "needs a waiter"} <small>${minsSince(c.created_at)}m</small>
+          <button type="button" data-done="${c.id}">Done</button></div>`
+      )
+      .join("");
+    box.querySelectorAll<HTMLButtonElement>("[data-done]").forEach((b) =>
+      b.addEventListener("click", () =>
+        act(b, async () => {
+          const { error } = await sb().rpc("resolve_call", { p_id: Number(b.dataset.done) });
+          if (error) throw error;
+          calls = calls.filter((c) => c.id !== Number(b.dataset.done));
+          renderCalls();
+          renderTables();
+        })
+      )
+    );
+  }
+
+  // ---------- the selected table's bill
+  type POrder = { id: string; code: string; status: string; total: number; created_at: string; order_items: { name: string; qty: number; unit_price: number }[] };
+  let current: { s: Session; orders: POrder[]; paid: number } | null = null;
+
+  async function openPanel(label: string) {
+    selected = label;
+    document.querySelectorAll(".tb").forEach((el) => el.classList.toggle("is-sel", (el as HTMLElement).dataset.t === label));
+    const s = sessions.get(label);
+    $("[data-panel-empty]").hidden = !!s;
+    $("[data-panel-body]").hidden = !s;
+    if (!s) {
+      $("[data-panel-empty]").querySelector("p")!.textContent = `Table ${label} is free.`;
+      current = null;
+      return;
+    }
+    const [o, p] = await Promise.all([
+      sb().from("orders").select("id, code, status, total, created_at, order_items(name, qty, unit_price)").eq("session_id", s.id).order("created_at"),
+      sb().from("payments").select("amount").eq("session_id", s.id),
+    ]);
+    if (selected !== label) return;
+    current = { s, orders: (o.data || []) as POrder[], paid: (p.data || []).reduce((a, r) => a + Number(r.amount), 0) };
+    paintPanel();
+  }
+
+  function paintPanel() {
+    if (!current) return;
+    const { s, orders, paid } = current;
+    $("[data-p-table]").textContent = s.table_label;
+    $("[data-p-state]").textContent = STATE[s.status];
+    $("[data-p-since]").innerHTML = `Seated ${time(s.opened_at)} · ${minsSince(s.opened_at)} min${
+      s.status !== "paid" ? ` · Table PIN <b class="pin">${esc(s.pin)}</b>` : ""
+    }`;
+    $("[data-p-orders]").innerHTML = orders
+      .map(
+        (o) => `<div class="po ${o.status === "cancelled" ? "po--x" : ""}">
+          <div class="po__h"><b>#${esc(o.code)}</b> ${time(o.created_at)}
+            ${o.status !== "cancelled" && o.status !== "served" ? `<button type="button" class="po__x" data-cancel="${o.id}">Cancel</button>` : ""}
+            <span class="pill">${o.status}</span></div>
+          <ul>${o.order_items.map((i) => `<li><span>${i.qty} × ${esc(i.name)}</span><span>${rupee(i.qty * i.unit_price)}</span></li>`).join("")}</ul>
+        </div>`
+      )
+      .join("");
+    $("[data-p-orders]").querySelectorAll<HTMLButtonElement>("[data-cancel]").forEach((b) =>
+      b.addEventListener("click", () => {
+        if (!confirm("Cancel this order? It comes off the bill.")) return;
+        act(b, async () => {
+          const { error } = await sb().rpc("set_order_status", { p_order: b.dataset.cancel, p_status: "cancelled" });
+          if (error) throw error;
+          await loadAll();
+        }, "Order cancelled");
+      })
+    );
+    $("[data-p-sub]").textContent = rupee(s.subtotal);
+    $("[data-p-disc-row]").hidden = !Number(s.discount);
+    $("[data-p-disc]").textContent = "−" + rupee(s.discount);
+    $("[data-p-rate]").textContent = String(taxRate);
+    $("[data-p-tax]").textContent = rupee(s.tax);
+    $("[data-p-total]").textContent = rupee(s.total);
+    $("[data-p-paid-row]").hidden = !paid;
+    $("[data-p-paid]").textContent = rupee(paid);
+    const due = Math.max(0, Number(s.total) - paid);
+    $("[data-p-pay]").hidden = due <= 0;
+    $("[data-p-due]").textContent = rupee(due);
+    $("[data-p-discbox]").hidden = !canDiscount || s.status === "paid";
+    const closeBtn = $<HTMLButtonElement>("[data-close-table]");
+    closeBtn.hidden = !(s.status === "paid" || Number(s.total) === 0 || canForceClose);
+    closeBtn.textContent = s.status === "paid" || Number(s.total) === 0 ? "Close table" : "Close unpaid";
+  }
+
+  document.querySelectorAll<HTMLButtonElement>("[data-pay]").forEach((b) =>
+    b.addEventListener("click", () => {
+      if (!current) return;
+      const method = b.dataset.pay!;
+      const due = Math.max(0, Number(current.s.total) - current.paid);
+      if (!confirm(`Received ${rupee(due)} by ${method.toUpperCase()} for table ${current.s.table_label}?`)) return;
+      act(b, async () => {
+        const { error } = await sb().rpc("record_payment", { p_session: current!.s.id, p_method: method });
+        if (error) throw error;
+        await loadAll();
+      }, `Paid by ${method.toUpperCase()}`);
+    })
+  );
+
+  $<HTMLButtonElement>("[data-p-discgo]").addEventListener("click", (e) => {
+    if (!current) return;
+    const v = Number($<HTMLInputElement>("[data-p-discin]").value || 0);
+    act(e.currentTarget as HTMLButtonElement, async () => {
+      const { error } = await sb().rpc("set_discount", { p_session: current!.s.id, p_amount: v });
+      if (error) throw error;
+      $<HTMLInputElement>("[data-p-discin]").value = "";
+      await loadAll();
+    }, v ? `Discount ${rupee(v)} applied` : "Discount removed");
+  });
+
+  $<HTMLButtonElement>("[data-close-table]").addEventListener("click", (e) => {
+    if (!current) return;
+    const unpaid = current.s.status !== "paid" && Number(current.s.total) > 0;
+    if (!confirm(unpaid ? `Table ${current.s.table_label} hasn't paid ${rupee(current.s.total)}. Close it anyway?` : `Free table ${current.s.table_label} for the next guests?`)) return;
+    act(e.currentTarget as HTMLButtonElement, async () => {
+      const { error } = await sb().rpc("close_session", { p_session: current!.s.id });
+      if (error) throw error;
+      await loadAll();
+    }, `Table ${current.s.table_label} is free`);
+  });
+
+  $("[data-print]").addEventListener("click", () => {
+    if (!current) return;
+    const { s, orders } = current;
+    const lines = orders.filter((o) => o.status !== "cancelled").flatMap((o) => o.order_items);
+    $("[data-printbill]").innerHTML = `
+      <h3>Hotel Pandia's</h3><p>${esc(page.branchName(page.branch))} · Table ${esc(s.table_label)}<br>${new Date().toLocaleString("en-IN")}</p>
+      <table>${lines.map((i) => `<tr><td>${i.qty} × ${esc(i.name)}</td><td>${rupee(i.qty * i.unit_price)}</td></tr>`).join("")}
+      <tr class="tot"><td>Subtotal</td><td>${rupee(s.subtotal)}</td></tr>
+      ${Number(s.discount) ? `<tr><td>Discount</td><td>−${rupee(s.discount)}</td></tr>` : ""}
+      <tr><td>GST ${taxRate}%</td><td>${rupee(s.tax)}</td></tr>
+      <tr class="tot"><td>TOTAL</td><td>${rupee(s.total)}</td></tr></table>
+      <p style="margin-top:8px">Thank you! வாங்க, மீண்டும் வருக!</p>`;
+    print();
+  });
+
+  // ---------- realtime: any change at this branch refreshes the floor (debounced)
+  let channel: ReturnType<ReturnType<typeof sb>["channel"]> | null = null;
+  let pending: number | undefined;
+  const soon = () => {
+    clearTimeout(pending);
+    pending = window.setTimeout(loadAll, 250);
+  };
+  function subscribe() {
+    channel?.unsubscribe();
+    const f = `branch_id=eq.${page.branch}`;
+    channel = sb()
+      .channel("desk-" + page.branch)
+      .on("postgres_changes", { event: "*", schema: "public", table: "table_sessions", filter: f }, soon)
+      .on("postgres_changes", { event: "*", schema: "public", table: "orders", filter: f }, soon)
+      .on("postgres_changes", { event: "*", schema: "public", table: "payments", filter: f }, soon)
+      .on("postgres_changes", { event: "*", schema: "public", table: "service_calls", filter: f }, (p) => {
+        if (p.eventType === "INSERT") {
+          sound.chime((p.new as Call).kind === "bill" ? 1 : 2);
+          navigator.vibrate?.(150);
+        }
+        soon();
+      })
+      .subscribe((st) => st === "SUBSCRIBED" && loadAll());
+  }
+
+  const soundBtn = $<HTMLButtonElement>("[data-sound]");
+  soundBtn.addEventListener("click", async () => {
+    await sound.enable();
+    sound.chime();
+    soundBtn.classList.add("sbtn--green");
+    soundBtn.querySelector("span")!.textContent = "Sound on";
+  });
+
+  page.onBranchChange(() => {
+    selected = null;
+    $("[data-panel-empty]").hidden = false;
+    $("[data-panel-body]").hidden = true;
+    subscribe();
+  });
+  subscribe();
+  setInterval(() => renderTables(), 60000); // keep "minutes seated" fresh
+  setInterval(loadAll, 120000);
+  document.addEventListener("visibilitychange", () => !document.hidden && loadAll());
+</script>
