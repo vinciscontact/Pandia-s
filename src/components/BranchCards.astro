@@ -1,116 +1,257 @@
 ---
 import Icon from "./Icon.astro";
-import { branches, mapsUrl } from "../data/site";
+import { branches, mapsUrl, waLink } from "../data/site";
 interface Props { compact?: boolean }
 const { compact = false } = Astro.props;
+// on the homepage the cards sit under a section heading (h2); on /branches, straight under the h1
+const Name = compact ? "h3" : "h2";
+
+// "11:00 AM to 11:00 PM" -> minutes after midnight, for the live "Open now" line
+const toMin = (t: string) => {
+  const m = t.match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
+  if (!m) return null;
+  return ((Number(m[1]) % 12) + (m[3].toUpperCase() === "PM" ? 12 : 0)) * 60 + Number(m[2]);
+};
+const short = (min: number) => {
+  const h = Math.floor(min / 60) % 24;
+  const mm = min % 60;
+  return `${h % 12 || 12}${mm ? ":" + String(mm).padStart(2, "0") : ""} ${h < 12 ? "AM" : "PM"}`;
+};
+const cards = branches.map((b) => {
+  const [o, c] = (b.hours || "").split(/\s+to\s+/i).map(toMin);
+  return { ...b, open: o ?? null, close: c ?? null };
+});
 ---
 <div class={`branches ${compact ? "branches--compact" : ""}`}>
-  {branches.map((b, i) => (
+  {cards.map((b, i) => (
     <article class="branch" id={b.id} data-reveal style={`--d:${i * 0.07}s`}>
-      <div class="branch__top">
-        <span class="branch__no">{String(i + 1).padStart(2, "0")}</span>
-        {b.rating && <span class="branch__rating"><Icon name="star" /> {b.rating.value.toFixed(1)}</span>}
+      <header class="branch__head">
+        <div>
+          <Name class="branch__name">{b.name}</Name>
+          <p class="branch__ta" lang="ta">{b.tamil}</p>
+        </div>
+        {b.rating && (
+          <span class="branch__rating" title={`${b.rating.value.toFixed(1)} from ${b.rating.count} ratings on ${b.rating.source}`}>
+            <Icon name="star" /> {b.rating.value.toFixed(1)}
+          </span>
+        )}
+      </header>
+
+      <div class="branch__addr">
+        <p>{b.address}</p>
+        {b.landmark && <p class="branch__land">{b.landmark}</p>}
       </div>
-      <h3>{b.name}</h3>
-      <p class="branch__addr">{b.address}</p>
-      {b.landmark && <p class="branch__land">{b.landmark}</p>}
+
       <ul class="branch__facts">
-        <li><Icon name="clock" /> {b.hours ?? "Call for timings"}</li>
-        {b.phoneDisplay && <li><Icon name="phone" /> <a href={`tel:${b.phone}`}>{b.phoneDisplay}</a></li>}
+        {b.open !== null && b.close !== null ? (
+          <li>
+            <Icon name="clock" />
+            <span>
+              {short(b.open)} – {short(b.close)}
+              <b class="branch__status" data-open={b.open} data-close={b.close} hidden></b>
+            </span>
+          </li>
+        ) : (
+          <li class="branch__muted"><Icon name="clock" /> Timings on WhatsApp</li>
+        )}
+        {b.phone && <li><Icon name="phone" /> <a href={`tel:${b.phone}`}>{b.phoneDisplay}</a></li>}
       </ul>
+
       <div class="branch__actions">
         <a class="btn btn--dark" href={mapsUrl(b)} target="_blank" rel="noopener"><Icon name="map" /> Directions</a>
-        {b.phone && <a class="btn btn--ghost" href={`tel:${b.phone}`}><Icon name="phone" /> Call</a>}
+        {b.phone ? (
+          <a class="btn btn--ghost" href={`tel:${b.phone}`}><Icon name="phone" /> Call</a>
+        ) : (
+          <a class="btn btn--ghost" href={waLink(`Hi Pandia's ${b.name}! What are your timings today?`)} target="_blank" rel="noopener"><Icon name="whatsapp" /> WhatsApp</a>
+        )}
       </div>
     </article>
   ))}
 </div>
+
+<script>
+  // "Open now · till 11 PM" in Chennai time, whatever the visitor's clock is set to
+  const fmt = (min: number) => {
+    const h = Math.floor(min / 60) % 24;
+    const m = min % 60;
+    return `${h % 12 || 12}${m ? ":" + String(m).padStart(2, "0") : ""} ${h < 12 ? "AM" : "PM"}`;
+  };
+  const d = new Date();
+  const now = (d.getUTCHours() * 60 + d.getUTCMinutes() + 330) % 1440; // IST = UTC+5:30
+  document.querySelectorAll<HTMLElement>(".branch__status").forEach((el) => {
+    const open = Number(el.dataset.open);
+    const close = Number(el.dataset.close);
+    const isOpen = close > open ? now >= open && now < close : now >= open || now < close;
+    const soon = isOpen && (close - now + 1440) % 1440 <= 45;
+    el.textContent = isOpen ? (soon ? `Closing soon · ${fmt(close)}` : `Open now · till ${fmt(close)}`) : `Closed · opens ${fmt(open)}`;
+    el.dataset.state = isOpen ? (soon ? "soon" : "open") : "closed";
+    el.hidden = false;
+  });
+</script>
+
 <style>
   .branches {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: 18px;
+    gap: 16px 18px;
   }
+  /* each card shares the grid's rows, so names, addresses, hours and buttons line up across cards */
   .branch {
+    display: grid;
+    grid-row: span 4;
+    grid-template-rows: subgrid;
+    row-gap: 0;
     background: var(--surface);
     border-radius: var(--radius);
-    padding: 24px;
     box-shadow: var(--shadow-soft);
-    display: flex;
-    flex-direction: column;
-    border-top: 5px solid var(--red-600);
+    overflow: hidden;
+    transition: transform 0.35s var(--ease-out), box-shadow 0.35s var(--ease-out);
   }
-  .branch__top {
+  .branch:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-pop);
+  }
+
+  /* the board: maroon with a scalloped edge, like the awning over the shop */
+  .branch__head {
+    position: relative;
+    z-index: 1;
     display: flex;
     justify-content: space-between;
-    align-items: center;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 22px 22px 20px;
+    background:
+      radial-gradient(120% 90% at 100% 0, rgb(232 176 74 / 0.18), transparent 60%),
+      var(--maroon-900);
+    color: var(--cream-50);
   }
-  .branch__no {
-    font-family: var(--font-mono);
+  .branch__head::after {
+    content: "";
+    position: absolute;
+    inset: auto 0 -9px;
+    height: 10px;
+    background: radial-gradient(circle at 50% 0, var(--maroon-900) 8.5px, transparent 9px) 0 0 / 18px 10px repeat-x;
+  }
+  .branch__name {
+    font-size: clamp(1.9rem, 1.5rem + 1vw, 2.4rem);
+    font-weight: 800;
+    font-stretch: 75%;
+    line-height: 0.92;
+    color: var(--cream-50);
+  }
+  .branch__ta {
+    margin-top: 6px;
+    font-family: var(--font-tamil);
     font-weight: 600;
-    color: var(--red-600);
+    font-size: 0.95rem;
+    color: var(--gold-300);
   }
   .branch__rating {
+    flex: none;
     display: inline-flex;
     align-items: center;
     gap: 4px;
-    font-family: var(--font-mono);
-    font-weight: 600;
-    font-size: 0.85rem;
-    background: var(--cream-200);
-    padding: 3px 10px;
-    border-radius: 999px;
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: var(--gold-300);
   }
   .branch__rating :global(svg) {
-    width: 13px;
-    color: var(--gold-600);
+    width: 15px;
+    color: var(--gold-500);
   }
-  h3 {
-    font-size: var(--step-2);
-    margin: 14px 0 8px;
-    color: var(--maroon-900);
-  }
+
   .branch__addr {
-    color: var(--text);
+    padding: 26px 22px 0;
+  }
+  .branch__addr p:first-child {
+    font-weight: 600;
+    line-height: 1.35;
   }
   .branch__land {
+    margin-top: 6px;
     color: var(--text-soft);
     font-size: 0.9rem;
-    margin-top: 4px;
+    line-height: 1.4;
   }
+
   .branch__facts {
     list-style: none;
-    padding: 0;
-    margin: 16px 0 20px;
+    margin: 16px 22px 0;
+    padding: 16px 0 0;
+    border-top: 1px dashed var(--line);
     display: grid;
-    gap: 6px;
-    font-size: 0.93rem;
+    gap: 10px;
+    align-content: start;
+    font-size: 0.95rem;
   }
   .branch__facts li {
     display: flex;
-    gap: 8px;
-    align-items: center;
+    gap: 10px;
+    align-items: flex-start;
   }
   .branch__facts :global(svg) {
-    width: 16px;
+    flex: none;
+    width: 17px;
+    margin-top: 2px;
     color: var(--red-600);
   }
   .branch__facts a {
     text-decoration: none;
+    font-weight: 600;
   }
+  .branch__facts a:hover {
+    color: var(--red-600);
+  }
+  .branch__muted {
+    color: var(--text-soft);
+  }
+  .branch__status {
+    display: block;
+    margin-top: 3px;
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--text-soft);
+  }
+  .branch__status::before {
+    content: "";
+    display: inline-block;
+    width: 7px;
+    height: 7px;
+    margin-right: 6px;
+    border-radius: 50%;
+    background: currentColor;
+    vertical-align: 1px;
+  }
+  .branch__status[data-state="open"] {
+    color: #226b2c; /* --leaf darkened for small text on cream (contrast 6+) */
+  }
+  .branch__status[data-state="soon"] {
+    color: var(--gold-600);
+  }
+
   .branch__actions {
-    margin-top: auto;
-    display: flex;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
     gap: 8px;
-    flex-wrap: wrap;
+    align-self: end;
+    padding: 20px 22px 22px;
   }
   .branch__actions .btn {
-    min-height: 42px;
-    font-size: 0.9rem;
-    padding: 0 1em;
+    min-height: 44px;
+    font-size: 0.92rem;
+    padding: 0 0.8em;
   }
   .branch__actions .btn--ghost {
     color: var(--maroon-900);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .branch,
+    .branch:hover {
+      transition: none;
+      transform: none;
+    }
   }
   @media (max-width: 1100px) {
     .branches {
@@ -121,7 +262,7 @@ const { compact = false } = Astro.props;
     .branches--compact {
       grid-auto-flow: column;
       grid-template-columns: none;
-      grid-auto-columns: 82%;
+      grid-auto-columns: 84%;
       overflow-x: auto;
       scroll-snap-type: x mandatory;
       margin-inline: calc(var(--gutter) * -1);

@@ -1,9 +1,5 @@
 ---
 // Chef Magic layout: the private staff screens. Not linked in the nav, not indexed.
-import "@fontsource-variable/fraunces";
-import "@fontsource-variable/bricolage-grotesque";
-import "@fontsource/jetbrains-mono/500.css";
-import "@fontsource/jetbrains-mono/600.css";
 import "../styles/global.css";
 import Icon from "../components/Icon.astro";
 import { SCREENS } from "../lib/staff";
@@ -20,6 +16,8 @@ const { title, dark = false, bare = false } = Astro.props;
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <!-- headline + body font: fetch it with the HTML so the first headline paints in it -->
+    <link rel="preload" href="/fonts/anek-latin.woff2" as="font" type="font/woff2" crossorigin />
     <meta name="robots" content="noindex, nofollow" />
     <meta name="theme-color" content={dark ? "#22060a" : "#3a0a10"} />
     <link rel="icon" type="image/png" href="/favicon.png" />

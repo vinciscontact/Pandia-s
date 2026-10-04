@@ -1268,11 +1268,15 @@ const branchJson = JSON.stringify(branches.map((b) => ({ id: b.id, name: b.name,
       }
     });
 
-    // a phone without the key: if someone's bill is open here, ask for the PIN first
+    // a phone without the key: show the menu straight away (most tables are free), and
+    // switch to the PIN screen if it turns out someone's bill is already open here
     function startFresh() {
-      Promise.race([orderApi.tableBusy(branch.id, table), new Promise<boolean>((r) => setTimeout(() => r(false), 2500))])
-        .catch(() => false)
-        .then((busy) => (busy ? showJoin() : show("menu")));
+      show("menu");
+      render();
+      orderApi
+        .tableBusy(branch.id, table)
+        .then((busy) => busy && !token && !$("[data-view=menu]").hidden && showJoin())
+        .catch(() => {});
     }
 
     render();

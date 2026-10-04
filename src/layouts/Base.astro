@@ -1,9 +1,4 @@
 ---
-import "@fontsource-variable/fraunces";
-import "@fontsource-variable/bricolage-grotesque";
-import "@fontsource/jetbrains-mono/500.css";
-import "@fontsource/jetbrains-mono/600.css";
-import "@fontsource-variable/noto-serif-tamil";
 import "../styles/global.css";
 import Nav from "../components/Nav.astro";
 import Footer from "../components/Footer.astro";
@@ -45,6 +40,8 @@ const ld = {
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <!-- headline + body font: fetch it with the HTML so the first headline paints in it -->
+    <link rel="preload" href="/fonts/anek-latin.woff2" as="font" type="font/woff2" crossorigin />
     <title>{fullTitle}</title>
     <meta name="description" content={description} />
     <link rel="canonical" href={canonical} />

@@ -26,6 +26,7 @@ export const site = {
 export type Branch = {
   id: string;
   name: string;
+  tamil: string; // branch name on the board, in Tamil
   area: string;
   address: string;
   landmark?: string;
@@ -43,6 +44,7 @@ export const branches: Branch[] = [
   {
     id: "vadapalani",
     name: "Vadapalani",
+    tamil: "வடபழனி",
     area: "Vadapalani",
     address: "189, Arcot Road, Vadapalani, Chennai 600026",
     landmark: "Opposite Kamala Theatre, near Vijaya Forum Mall",
@@ -57,6 +59,7 @@ export const branches: Branch[] = [
   {
     id: "washermenpet",
     name: "Washermenpet",
+    tamil: "வண்ணாரப்பேட்டை",
     area: "Washermenpet",
     address: "Washermenpet, Chennai",
     phone: "+914425952411",
@@ -71,6 +74,7 @@ export const branches: Branch[] = [
   {
     id: "royapuram",
     name: "Royapuram",
+    tamil: "ராயபுரம்",
     area: "Royapuram",
     address: "Cemetery Road, Royapuram, Chennai",
     tables: 16,
@@ -79,6 +83,7 @@ export const branches: Branch[] = [
   {
     id: "kottivakkam",
     name: "Kottivakkam",
+    tamil: "கொட்டிவாக்கம்",
     area: "Kottivakkam",
     address: "Kottivakkam, Chennai",
     tables: 12,

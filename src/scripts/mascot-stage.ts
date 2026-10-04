@@ -48,19 +48,80 @@ const SIDE: [number, number][] = [
   [1, -1],
 ];
 
+/** hand the main thread back (taps, scrolling) between heavy setup steps */
+/**
+ * Room lighting (what makes the gold shine). Generating it in the browser (PMREM of three's
+ * RoomEnvironment) froze the page for ~0.8 s on desktop and ~3 s on a mid phone, in one block.
+ * So it is baked once into /env/room-128.webp (a PMREM "cube UV" sheet, each channel stored as
+ * sqrt(v / (1 + v)) so the bright panels fit 8 bits) and expanded back here with a lookup table.
+ * Re-bake: render PMREMGenerator.fromScene(new RoomEnvironment(), 0.04, 0.1, 100, { size: 128 }),
+ * read it back, encode as above, flip rows to top-down, save as lossless WebP.
+ */
+const ENV_URL = "/env/room-128.webp";
+function roomLightFrom(THREE: typeof THREE_NS, img: HTMLImageElement) {
+  const { naturalWidth: w, naturalHeight: h } = img;
+  const c = document.createElement("canvas");
+  c.width = w;
+  c.height = h;
+  const ctx = c.getContext("2d", { willReadFrequently: true })!;
+  ctx.drawImage(img, 0, 0);
+  const px = ctx.getImageData(0, 0, w, h).data;
+  const lut = new Uint16Array(256);
+  for (let i = 0; i < 256; i++) {
+    const t = Math.min((i / 255) ** 2, 0.9999);
+    lut[i] = THREE.DataUtils.toHalfFloat(t / (1 - t));
+  }
+  const one = THREE.DataUtils.toHalfFloat(1);
+  const data = new Uint16Array(w * h * 4);
+  for (let y = 0; y < h; y++) {
+    const row = (h - 1 - y) * w * 4; // image rows are top-down, texture rows bottom-up
+    for (let x = 0; x < w * 4; x += 4) {
+      const s = y * w * 4 + x;
+      data[row + x] = lut[px[s]];
+      data[row + x + 1] = lut[px[s + 1]];
+      data[row + x + 2] = lut[px[s + 2]];
+      data[row + x + 3] = one;
+    }
+  }
+  const tex = new THREE.DataTexture(data, w, h, THREE.RGBAFormat, THREE.HalfFloatType);
+  tex.mapping = THREE.CubeUVReflectionMapping;
+  tex.colorSpace = THREE.LinearSRGBColorSpace;
+  tex.magFilter = tex.minFilter = THREE.LinearFilter;
+  tex.generateMipmaps = false;
+  tex.needsUpdate = true;
+  return tex;
+}
+/** fallback if the baked file can't load: generate it live (the slow way) */
+async function liveRoomLight(THREE: typeof THREE_NS, renderer: THREE_NS.WebGLRenderer) {
+  const { RoomEnvironment } = await import("three/examples/jsm/environments/RoomEnvironment.js");
+  return new THREE.PMREMGenerator(renderer).fromScene(new RoomEnvironment(), 0.04).texture;
+}
+
+/** named steps show up in DevTools / Lighthouse "User Timing", to see what setup costs */
+const mark = (name: string) => performance.mark("mascot:" + name);
+const breathe = () =>
+  (globalThis as any).scheduler?.yield?.() ?? new Promise<void>((r) => setTimeout(r, 0));
+
 export async function initMascotStage({ story, canvas, poster, model }: Opts) {
   const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
   const gl = canvas.getContext("webgl2", { antialias: true, alpha: true, powerPreference: "high-performance" });
   if (!gl) return; // poster stays
+  mark("start");
 
-  const [THREE, { GLTFLoader }, { MeshoptDecoder }, { RoomEnvironment }, { mergeGeometries }] = await Promise.all([
+  // the room lighting is pre-baked (see loadRoomLight); fetch it alongside the engine
+  const envImg = new Image();
+  envImg.src = ENV_URL;
+  const envReady = envImg.decode().then(() => true, () => false);
+
+  const [THREE, { GLTFLoader }, { MeshoptDecoder }, { mergeGeometries }] = await Promise.all([
     import("three"),
     import("three/examples/jsm/loaders/GLTFLoader.js"),
     import("three/examples/jsm/libs/meshopt_decoder.module.js"),
-    import("three/examples/jsm/environments/RoomEnvironment.js"),
     import("three/examples/jsm/utils/BufferGeometryUtils.js"),
   ]);
 
+  mark("imports");
+  await breathe();
   const mobile = () => innerWidth < 760;
   const lowEnd = (navigator.hardwareConcurrency || 8) <= 4 || ((navigator as any).deviceMemory || 8) <= 4;
 
@@ -71,9 +132,10 @@ export async function initMascotStage({ story, canvas, poster, model }: Opts) {
   renderer.toneMappingExposure = 1.05;
 
   const scene = new THREE.Scene();
-  const pmrem = new THREE.PMREMGenerator(renderer);
-  scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+  scene.environment = (await envReady) ? roomLightFrom(THREE, envImg) : await liveRoomLight(THREE, renderer);
   scene.environmentIntensity = 0.75;
+  mark("environment");
+  await breathe();
   const key = new THREE.DirectionalLight(0xfff1e0, 2.2);
   key.position.set(-3, 5, 6);
   const rim = new THREE.DirectionalLight(0xffd7a8, 1.6);
@@ -86,6 +148,8 @@ export async function initMascotStage({ story, canvas, poster, model }: Opts) {
   const loader = new GLTFLoader();
   loader.setMeshoptDecoder(MeshoptDecoder);
   const gltf = await loader.loadAsync(model);
+  mark("model");
+  await breathe();
   const root = gltf.scene;
   // glTF is Y-up; character is ~2.45 units tall with feet at y=0
   const holder = new THREE.Group();
@@ -107,6 +171,9 @@ export async function initMascotStage({ story, canvas, poster, model }: Opts) {
   });
   const SKIP_OUTLINE = /Rice|Onion|Mint|Steam|Eye|Lash|Brow|Placket|Lapel|Stripe|Knob|Grain|Jewel|Ring|Hem|Trim/i;
   const steam: THREE_NS.Mesh[] = [];
+  // each strand's rest pose: the compressed model keeps parts at a node scale (~0.27), so the
+  // animation must scale relative to it, and keep the strand's foot on the biryani while it grows
+  const steamRest = new Map<THREE_NS.Mesh, { pos: THREE_NS.Vector3; scale: THREE_NS.Vector3; foot: number }>();
   const meshes: THREE_NS.Mesh[] = [];
   root.traverse((o) => {
     const m = o as THREE_NS.Mesh;
@@ -124,14 +191,23 @@ export async function initMascotStage({ story, canvas, poster, model }: Opts) {
   // ---- merge parts that move together and share a material: ~190 draw calls -> far fewer.
   // Each glTF part is its own mesh; parts on the same bone with the same material are
   // baked into one geometry (in the bone's space), so the animation is unaffected.
+  // quantized (normalized int) attributes -> plain floats, with typed-array copies (no per-value calls)
+  const NORM: Record<string, number> = { Int8Array: 127, Uint8Array: 255, Int16Array: 32767, Uint16Array: 65535 };
   const toFloat = (g: THREE_NS.BufferGeometry, m: THREE_NS.Matrix4) => {
     const out = new THREE.BufferGeometry();
     for (const [name, a] of Object.entries(g.attributes) as [string, THREE_NS.BufferAttribute][]) {
-      const arr = new Float32Array(a.count * a.itemSize);
-      for (let i = 0; i < a.count; i++) for (let c = 0; c < a.itemSize; c++) arr[i * a.itemSize + c] = a.getComponent(i, c);
+      let arr: Float32Array;
+      if ((a as any).isInterleavedBufferAttribute) {
+        arr = new Float32Array(a.count * a.itemSize);
+        for (let i = 0; i < a.count; i++) for (let c = 0; c < a.itemSize; c++) arr[i * a.itemSize + c] = a.getComponent(i, c);
+      } else {
+        arr = Float32Array.from(a.array as ArrayLike<number>);
+        const div = a.normalized ? NORM[a.array.constructor.name] : 0;
+        if (div) for (let i = 0; i < arr.length; i++) arr[i] = Math.max(arr[i] / div, -1);
+      }
       out.setAttribute(name, new THREE.BufferAttribute(arr, a.itemSize));
     }
-    if (g.index) out.setIndex(Array.from(g.index.array as ArrayLike<number>));
+    if (g.index) out.setIndex(new THREE.BufferAttribute((g.index.array as Uint16Array | Uint32Array).slice(), 1));
     out.applyMatrix4(m);
     return out;
   };
@@ -143,8 +219,10 @@ export async function initMascotStage({ story, canvas, poster, model }: Opts) {
     const key = [m.parent.uuid, (m.material as THREE_NS.Material).uuid, outlined(m.name), Object.keys(m.geometry.attributes).sort().join(), !!m.geometry.index].join("|");
     groups.set(key, [...(groups.get(key) || []), m]);
   }
+  let merged_n = 0;
   for (const parts of groups.values()) {
     if (parts.length < 2) continue;
+    if (++merged_n % 6 === 0) await breathe();
     const parent = parts[0].parent!;
     const geoms = parts.map((m) => (m.updateMatrix(), toFloat(m.geometry, m.matrix)));
     const merged = mergeGeometries(geoms, false);
@@ -162,9 +240,14 @@ export async function initMascotStage({ story, canvas, poster, model }: Opts) {
   for (const m of meshes) {
     const mat = m.material as THREE_NS.MeshStandardMaterial;
     if (isSteam(m)) {
-      mat.transparent = true;
-      mat.opacity = 0.4;
-      mat.depthWrite = false;
+      // own material per strand, so each can fade on its own rhythm
+      const own = mat.clone();
+      own.transparent = true;
+      own.opacity = 0.4;
+      own.depthWrite = false;
+      m.material = own;
+      m.geometry.computeBoundingBox();
+      steamRest.set(m, { pos: m.position.clone(), scale: m.scale.clone(), foot: m.geometry.boundingBox!.min.y });
       steam.push(m);
       continue;
     }
@@ -272,8 +355,11 @@ export async function initMascotStage({ story, canvas, poster, model }: Opts) {
   const startedAtTop = progress < 0.02;
 
   let lastNow = performance.now();
+  let firstFrame = true;
   function frame(now: number) {
     requestAnimationFrame(frame);
+    if (firstFrame) requestAnimationFrame(() => mark("first-frame-done"));
+    firstFrame = false;
     const dt = Math.min(0.1, Math.max(0, (now - lastNow) / 1000));
     lastNow = now;
     if (!visible || document.hidden) return;
@@ -347,9 +433,16 @@ export async function initMascotStage({ story, canvas, poster, model }: Opts) {
         neck.rotateX(pitch + nod);
         neck.rotateZ(-yaw * 0.18);
       }
+      // steam: each strand drifts up off the rice, stretches, fades, and starts again
       steam.forEach((m, i) => {
-        (m.material as THREE_NS.Material).opacity = 0.28 + 0.18 * (0.5 + 0.5 * Math.sin(s * 2.4 + i * 1.7));
-        m.scale.y = 1 + 0.08 * Math.sin(s * 1.8 + i);
+        const rest = steamRest.get(m)!;
+        const p = (s / (2.8 + i * 0.5) + i * 0.5) % 1; // 0 → 1 over one puff
+        const f = 0.85 + 0.3 * p;
+        (m.material as THREE_NS.Material).opacity = 0.05 + 0.4 * Math.sin(Math.PI * p);
+        m.scale.set(rest.scale.x, rest.scale.y * f, rest.scale.z);
+        // grow from the foot (not the middle), then lift the whole wisp a little
+        m.position.y = rest.pos.y + rest.scale.y * rest.foot * (1 - f) + 0.1 * p;
+        m.position.x = rest.pos.x + 0.012 * Math.sin(s * 1.6 + i * 2);
       });
     }
     renderer.render(scene, camera);
@@ -378,6 +471,17 @@ export async function initMascotStage({ story, canvas, poster, model }: Opts) {
     if (raycaster.intersectObjects(headMeshes, false).length) nodAt = performance.now() / 1000;
   });
   new IntersectionObserver(([e]) => (visible = e.isIntersecting)).observe(story);
+
+  mark("prepared");
+  // compile every shader before the first frame, off the main thread where the browser
+  // supports it (KHR_parallel_shader_compile), so the first frame doesn't freeze the page
+  resize();
+  await breathe();
+  try {
+    await (renderer as any).compileAsync?.(scene, camera);
+  } catch {}
+  mark("compiled");
+  await breathe();
 
   requestAnimationFrame(frame);
   canvas.classList.add("is-ready");

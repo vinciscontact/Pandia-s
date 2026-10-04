@@ -21,6 +21,7 @@ Set the real domain in `astro.config.mjs` (`site:`) before going live. It is use
 | Brand, phone, WhatsApp, branches, reviews | `src/data/site.ts` |
 | Menu (categories, dishes, prices, veg/egg/non-veg, tags) | `src/data/menu.ts` |
 | Colours, fonts, spacing (design tokens) | `src/styles/global.css` |
+| Fonts (Anek Tamil, self-hosted + trimmed) | `public/fonts/`, rebuilt by `python scripts/subset-fonts.py` |
 | 3D mascot scroll story | `src/components/MascotStory.astro` + `src/scripts/mascot-stage.ts` |
 | 3D model (animated, meshopt-compressed) | `public/models/pandia-mascot.glb` |
 | Ordering API layer | `src/lib/order/api.ts`, `src/lib/order/types.ts` |

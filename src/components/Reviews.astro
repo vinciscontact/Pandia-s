@@ -6,23 +6,36 @@ const rated = branches.filter((b) => b.rating);
 ---
 <section class="rev">
   <div class="wrap">
-    <SectionHead eyebrow="What people say" title="Chennai keeps <em>coming back.</em>" align="center" tone="dark" />
-    <div class="rev__scores" data-reveal>
+    <SectionHead eyebrow="What people say" title="Chennai keeps coming back." align="center" tone="dark" />
+
+    <!-- the scores, set like the totals at the foot of a bill -->
+    <dl class="rev__scores" data-reveal>
       {rated.map((b) => (
         <div class="score">
-          <strong>{b.rating!.value.toFixed(1)}<Icon name="star" /></strong>
-          <span>{b.name} on {b.rating!.source}</span>
+          <dt>{b.name}</dt>
+          <dd>
+            <strong>{b.rating!.value.toFixed(1)}</strong><Icon name="star" />
+            <small>on {b.rating!.source}</small>
+          </dd>
         </div>
       ))}
+    </dl>
+
+    <!-- what guests said, hung like order chits on the kitchen rail -->
+    <div class="rail">
+      <div class="rail__track">
+        {reviews.map((r, i) => (
+          <figure class="chit" data-reveal style={`--d:${i * 0.08}s;--r:${[-1.6, 1.1, -0.8, 1.4][i % 4]}deg`}>
+            <div class="chit__paper">
+              <p class="chit__head"><span>Guest chit</span><span lang="ta">நன்றி</span></p>
+              <blockquote>{r.quote}</blockquote>
+              <figcaption><b>{r.name}</b><span>{r.source}</span></figcaption>
+            </div>
+          </figure>
+        ))}
+      </div>
     </div>
-    <div class="rev__grid">
-      {reviews.map((r, i) => (
-        <figure class="quote" data-reveal style={`--d:${i * 0.08}s;--r:${[-1.2, 0.8, -0.6, 1.1][i % 4]}deg`}>
-          <blockquote>“{r.quote}”</blockquote>
-          <figcaption><b>{r.name}</b><span>{r.source}</span></figcaption>
-        </figure>
-      ))}
-    </div>
+
     <p class="rev__cta" data-reveal>
       Eaten with us? <a href={site.social.zomato} target="_blank" rel="noopener">Leave a review</a>. It helps more than you think.
     </p>
@@ -45,92 +58,201 @@ const rated = branches.filter((b) => b.rating);
   .rev .wrap {
     position: relative;
   }
+
+  /* scores: big numbers with a rule between, no pills */
   .rev__scores {
     display: flex;
     justify-content: center;
-    gap: 14px;
-    flex-wrap: wrap;
-    margin: -10px 0 44px;
+    margin: -6px 0 64px;
   }
   .score {
+    padding: 0 clamp(20px, 4vw, 44px);
+    text-align: center;
+  }
+  .score + .score {
+    border-left: 1px solid rgb(255 255 255 / 0.14);
+  }
+  .score dt {
+    font-family: var(--font-display);
+    font-stretch: 85%;
+    font-weight: 700;
+    font-size: 0.82rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--gold-300);
+  }
+  .score dd {
+    margin: 2px 0 0;
     display: flex;
     align-items: center;
-    gap: 12px;
-    background: rgb(255 255 255 / 0.06);
-    border: 1px solid rgb(255 255 255 / 0.1);
-    padding: 10px 18px 10px 12px;
-    border-radius: 999px;
+    justify-content: center;
+    gap: 4px;
+    flex-wrap: wrap;
   }
   .score strong {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    background: var(--gold-500);
-    color: var(--maroon-900);
-    border-radius: 999px;
-    padding: 4px 10px;
-    font-family: var(--font-mono);
+    font-family: var(--font-display);
+    font-stretch: 75%;
+    font-weight: 800;
+    font-size: clamp(2.6rem, 2rem + 2vw, 3.4rem);
+    line-height: 1;
+    color: var(--cream-50);
   }
   .score :global(svg) {
-    width: 14px;
+    width: 22px;
+    color: var(--gold-500);
   }
-  .score span {
-    font-size: 0.9rem;
-    opacity: 0.85;
+  .score small {
+    flex-basis: 100%;
+    font-size: 0.82rem;
+    opacity: 0.7;
   }
-  .rev__grid {
+
+  /* the rail: a brass bar the chits are clipped to */
+  .rail__track {
+    --rail: 12px;
+    position: relative;
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: 18px;
-  }
-  .quote {
-    margin: 0;
-    background: var(--cream-50);
-    color: var(--ink);
-    border-radius: var(--radius);
-    padding: 26px 24px;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
+    align-items: start;
     gap: 22px;
-    rotate: var(--r);
-    box-shadow: 0 30px 50px -30px rgb(0 0 0 / 0.6);
-    transition: rotate 0.5s var(--ease-spring), translate 0.5s var(--ease-spring);
+    padding-top: calc(var(--rail) / 2);
   }
-  .quote:hover {
+  .rail__track::before {
+    content: "";
+    position: absolute;
+    inset: 0 -12px auto;
+    height: var(--rail);
+    border-radius: 999px;
+    background: linear-gradient(to bottom, #f6d58e, #c98f24 55%, #8a5a12);
+    box-shadow: 0 6px 14px -6px rgb(0 0 0 / 0.7);
+    z-index: 2;
+  }
+
+  .chit {
+    position: relative;
+    margin: 0;
+    padding-top: 18px; /* room for the clip */
+    rotate: var(--r);
+    transform-origin: 50% 0;
+    filter: drop-shadow(0 18px 22px rgb(0 0 0 / 0.45));
+    transition: rotate 0.6s var(--ease-spring);
+  }
+  .chit:hover {
     rotate: 0deg;
-    translate: 0 -6px;
+  }
+  /* the steel clip that holds the chit on the rail */
+  .chit::before {
+    content: "";
+    position: absolute;
+    top: -6px;
+    left: 50%;
+    translate: -50% 0;
+    width: 44px;
+    height: 28px;
+    border-radius: 4px 4px 6px 6px;
+    background: linear-gradient(to bottom, #d9d4cc, #8f877c);
+    box-shadow: inset 0 -3px 0 rgb(0 0 0 / 0.2);
+    z-index: 3;
+  }
+  /* paper with a torn zig-zag foot */
+  .chit__paper {
+    --z: 9px;
+    background:
+      repeating-linear-gradient(to bottom, transparent 0 27px, rgb(58 10 16 / 0.05) 27px 28px),
+      var(--cream-50);
+    color: var(--ink);
+    padding: 26px 22px calc(22px + var(--z));
+    mask:
+      linear-gradient(#000 0 0) top / 100% calc(100% - var(--z)) no-repeat,
+      conic-gradient(from -45deg at bottom, #0000, #000 1deg 89deg, #0000 90deg) bottom / calc(var(--z) * 2) var(--z) repeat-x;
+  }
+  .chit__head {
+    display: flex;
+    justify-content: space-between;
+    padding-bottom: 10px;
+    margin-bottom: 14px;
+    border-bottom: 1.5px dashed rgb(58 10 16 / 0.25);
+    font-family: var(--font-display);
+    font-stretch: 85%;
+    font-weight: 700;
+    font-size: 0.78rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--red-700);
+  }
+  .chit__head [lang="ta"] {
+    font-family: var(--font-tamil);
+    letter-spacing: 0;
+    text-transform: none;
+    font-size: 0.85rem;
+    color: var(--text-soft);
   }
   blockquote {
     margin: 0;
     font-family: var(--font-display);
-    font-size: 1.22rem;
-    line-height: 1.3;
-    font-weight: 500;
+    font-stretch: 85%;
+    font-weight: 600;
+    font-size: 1.32rem;
+    line-height: 1.22;
+    color: var(--maroon-900);
+  }
+  blockquote::before {
+    content: "“";
+    display: block;
+    height: 0.55em;
+    margin-bottom: 4px;
+    font-size: 3rem;
+    font-weight: 800;
+    line-height: 1;
+    color: var(--red-600);
   }
   figcaption {
     display: grid;
+    gap: 2px;
+    margin-top: 18px;
+    padding-top: 12px;
+    border-top: 1.5px dashed rgb(58 10 16 / 0.25);
     font-size: 0.85rem;
+    line-height: 1.35;
+  }
+  figcaption b {
+    color: var(--maroon-900);
   }
   figcaption span {
     color: var(--text-soft);
   }
+
   .rev__cta {
     text-align: center;
-    margin-top: 44px;
+    margin-top: 52px;
     opacity: 0.85;
   }
   .rev__cta a {
     color: var(--gold-300);
   }
-  @media (max-width: 1000px) {
-    .rev__grid {
-      grid-template-columns: 1fr 1fr;
+
+  @media (prefers-reduced-motion: reduce) {
+    .chit {
+      transition: none;
     }
   }
-  @media (max-width: 560px) {
-    .rev__grid {
-      grid-template-columns: 1fr;
+  /* smaller screens: one long rail you swipe along */
+  @media (max-width: 1000px) {
+    .rail {
+      overflow-x: auto;
+      scroll-snap-type: x mandatory;
+      margin-inline: calc(var(--gutter) * -1);
+      padding: 0 var(--gutter) 30px;
+      scrollbar-width: none;
+    }
+    .rail__track {
+      grid-template-columns: none;
+      grid-auto-flow: column;
+      grid-auto-columns: min(78vw, 300px);
+      width: max-content;
+    }
+    .chit {
+      scroll-snap-align: center;
     }
   }
 </style>

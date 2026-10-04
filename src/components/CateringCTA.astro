@@ -14,7 +14,23 @@ import { waLink } from "../data/site";
       </div>
     </div>
     <div class="cta__art" data-reveal style="--d:.1s">
-      <img src="/img/mascot-ok.webp" alt="The Hotel Pandia's biryani man doing a perfect sign" width="600" height="582" loading="lazy" />
+      <div class="steamy">
+        <img src="/img/mascot-ok-nosteam.webp" alt="The Hotel Pandia's biryani man doing a perfect sign" width="600" height="582" loading="lazy" />
+        <!-- live steam over the plate (drawn in the image's own 600×582 space, so it stays on the biryani at any size) -->
+        <svg class="cta-steam" viewBox="0 0 600 582" aria-hidden="true" focusable="false">
+          <defs>
+            <linearGradient id="cta-steam" x1="0" y1="1" x2="0" y2="0">
+              <stop offset="0" stop-color="#fff" stop-opacity="0" />
+              <stop offset="0.25" stop-color="#fff" stop-opacity="0.9" />
+              <stop offset="0.7" stop-color="#fff" stop-opacity="0.55" />
+              <stop offset="1" stop-color="#fff" stop-opacity="0" />
+            </linearGradient>
+          </defs>
+          <g class="steam__sway"><path class="steam__wisp" d="M50 268 c-13 -21 13 -40 0 -61 s13 -40 0 -61" /></g>
+          <g class="steam__sway" style="--steam-sway:4.6s;--steam-x:-5px"><path class="steam__wisp" style="--steam-dur:3.8s;--steam-delay:-1.4s" d="M71 270 c-12 -22 12 -42 0 -64 s12 -42 0 -64" /></g>
+          <g class="steam__sway" style="--steam-sway:5.4s;--steam-x:7px"><path class="steam__wisp" style="--steam-dur:3.4s;--steam-delay:-2.6s;--steam-w:7" d="M92 266 c-11 -19 11 -36 0 -55 s11 -36 0 -55" /></g>
+        </svg>
+      </div>
     </div>
   </div>
 </section>
@@ -61,12 +77,69 @@ import { waLink } from "../data/site";
   .cta__art {
     align-self: end;
   }
-  .cta__art img {
+  /* the box keeps the image's exact shape, so the steam overlay lines up with the plate */
+  .steamy {
+    position: relative;
+    width: min(100%, 536px); /* 520px tall at most */
+    margin-left: auto;
+  }
+  .steamy img {
+    display: block;
     width: 100%;
-    max-height: 520px;
-    object-fit: contain;
-    object-position: bottom;
+    height: auto;
     filter: drop-shadow(0 30px 40px rgb(0 0 0 / 0.35));
+  }
+  .cta-steam {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+    pointer-events: none;
+  }
+  .steam__wisp {
+    fill: none;
+    stroke: url(#cta-steam);
+    stroke-width: var(--steam-w, 9);
+    stroke-linecap: round;
+    transform-box: fill-box;
+    transform-origin: 50% 100%;
+    animation: steam-rise var(--steam-dur, 3.2s) var(--steam-delay, 0s) ease-out infinite;
+  }
+  .steam__sway {
+    transform-box: fill-box;
+    animation: steam-sway var(--steam-sway, 4s) ease-in-out infinite alternate;
+  }
+  @keyframes steam-rise {
+    0% {
+      transform: translateY(12px) scaleY(0.7);
+      opacity: 0;
+    }
+    25% {
+      opacity: 0.8;
+    }
+    70% {
+      opacity: 0.45;
+    }
+    100% {
+      transform: translateY(-44px) scaleY(1.12);
+      opacity: 0;
+    }
+  }
+  @keyframes steam-sway {
+    from {
+      transform: translateX(calc(var(--steam-x, 6px) * -1));
+    }
+    to {
+      transform: translateX(var(--steam-x, 6px));
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .steam__wisp,
+    .steam__sway {
+      animation: none;
+      opacity: 0.55;
+    }
   }
   @media (max-width: 800px) {
     .cta__inner {
@@ -75,6 +148,9 @@ import { waLink } from "../data/site";
     .cta__art {
       max-width: 300px;
       margin: -20px auto 0;
+    }
+    .steamy {
+      margin-inline: auto;
     }
   }
 </style>
