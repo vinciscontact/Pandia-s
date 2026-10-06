@@ -1,0 +1,51 @@
+# Hotel Pandia's on Hostinger (Apache / LiteSpeed). Copied into dist/ by `npm run build:hostinger`;
+# upload the contents of dist/ (including this hidden file) into public_html.
+
+Options -Indexes
+DirectoryIndex index.html
+
+# always HTTPS
+RewriteEngine On
+RewriteCond %{HTTPS} !=on
+RewriteCond %{HTTP:X-Forwarded-Proto} !=https
+RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+ErrorDocument 404 /404.html
+
+# file types Apache may not know
+AddType model/gltf-binary .glb
+AddType font/woff2 .woff2
+AddType image/webp .webp
+AddType application/manifest+json .webmanifest
+
+# compression (text only; images, fonts and the model are already compressed)
+<IfModule mod_deflate.c>
+  AddOutputFilterByType DEFLATE text/html text/css text/plain text/xml application/javascript application/json image/svg+xml application/xml
+</IfModule>
+
+# caching: built files have content hashes in their names, so they can be cached for a year
+<IfModule mod_headers.c>
+  <FilesMatch "\.(js|css)$">
+    Header set Cache-Control "public, max-age=31536000, immutable"
+  </FilesMatch>
+  <FilesMatch "\.(woff2|glb)$">
+    Header set Cache-Control "public, max-age=2592000"
+  </FilesMatch>
+  <FilesMatch "\.(webp|png|jpg|jpeg|svg|ico)$">
+    Header set Cache-Control "public, max-age=604800"
+  </FilesMatch>
+  <FilesMatch "\.html$">
+    Header set Cache-Control "public, max-age=0, must-revalidate"
+  </FilesMatch>
+
+  Header always set X-Content-Type-Options "nosniff"
+  Header always set Referrer-Policy "strict-origin-when-cross-origin"
+  Header always set X-Frame-Options "SAMEORIGIN"
+</IfModule>
+
+# staff screens stay out of search results
+<IfModule mod_headers.c>
+  <If "%{REQUEST_URI} =~ m#^/chef#">
+    Header set X-Robots-Tag "noindex, nofollow"
+  </If>
+</IfModule>

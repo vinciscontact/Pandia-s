@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "astro dev",
     "build": "astro build",
-    "preview": "astro preview"
+    "preview": "astro preview",
+    "build:hostinger": "astro build && node -e \"require('fs').copyFileSync('deploy/hostinger/.htaccess','dist/.htaccess')\""
   },
   "dependencies": {
     "@astrojs/sitemap": "^3.7.4",

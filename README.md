@@ -14,6 +14,30 @@ npm run preview   # serve the built site
 
 Set the real domain in `astro.config.mjs` (`site:`) before going live. It is used for canonical URLs, the sitemap and the table QR codes.
 
+## Deploy
+
+The site is static (plain HTML, CSS, JS and images in `dist/`). Orders, bills, staff logins and feedback live in
+Supabase, so **any** static host works. The public Supabase settings are in `.env.production` (publishable key
+only; all data is protected by row-level security), so every build comes out live, with nothing to configure.
+
+Before going live on a real domain, set `site:` in `astro.config.mjs` (canonical links, sitemap, table QR codes).
+
+### Vercel (recommended)
+
+1. vercel.com/new → import `vinciscontact/Pandia-s` → **Deploy**. Astro is detected; `vercel.json` adds the caching rules.
+2. Every push to `main` redeploys. Add the domain under Project → Settings → Domains.
+
+### Hostinger (or any Apache / cPanel host)
+
+1. `npm run build:hostinger` (builds and adds `deploy/hostinger/.htaccess`: HTTPS redirect, caching,
+   compression, 404 page, the `.glb` file type).
+2. Upload **everything inside `dist/`**, including the hidden `.htaccess`, into `public_html`
+   (hPanel File Manager: upload a zip and extract, or FTP).
+3. Turn on the free SSL certificate for the domain in hPanel.
+
+Re-run steps 1 and 2 for each update. Hostinger plans that support Git deployments can pull from GitHub,
+but they don't run `npm run build`, so upload the built `dist/` (or keep Vercel for automatic builds).
+
 ## Where things live
 
 | What | File |
