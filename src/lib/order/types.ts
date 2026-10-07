@@ -1,5 +1,8 @@
 // Shared contract between the website and the ordering backend (Supabase RPCs, see supabase/migrations).
 
+/** who is ordering: asked once at the first "Send to kitchen", remembered on the phone */
+export type Guest = { phone: string; name?: string; updates: boolean };
+
 export type CartLine = { dishId: string; name: string; price: number; qty: number; note?: string };
 
 export type OrderRequest = {
@@ -9,6 +12,8 @@ export type OrderRequest = {
   note?: string;
   /** the visit this phone already belongs to, so repeat orders land on the same bill */
   sessionToken?: string;
+  /** required unless the table's bill already has a guest number */
+  guest?: Guest;
 };
 
 export type OrderStage = "received" | "preparing" | "ready" | "served" | "cancelled";
@@ -40,6 +45,8 @@ export type Visit = {
   table: string;
   /** 4-digit PIN that lets another phone join this bill */
   pin?: string;
+  /** the bill already has a guest's mobile number (friends who join don't need to give one) */
+  hasGuest?: boolean;
   subtotal: number;
   taxPercent: number;
   tax: number;

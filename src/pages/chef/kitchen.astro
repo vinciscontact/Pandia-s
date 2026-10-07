@@ -145,6 +145,14 @@ import Icon from "../../components/Icon.astro";
     font-weight: 800;
     line-height: 1;
   }
+  .kcol__list :global(.tk__guest) {
+    margin: 4px 0 0;
+    color: var(--s-soft);
+  }
+  .kcol__list :global(.tk__guest b) {
+    color: inherit;
+    filter: brightness(1.4);
+  }
   .kcol__list :global(.tk__code) {
     font-family: var(--font-mono);
     color: var(--s-soft);
@@ -211,6 +219,7 @@ import Icon from "../../components/Icon.astro";
     note: string | null;
     created_at: string;
     order_items: { name: string; qty: number }[];
+    customers: { name: string | null } | null; // so the server can call the guest by name
   };
 
   const page = await initStaffPage(["kitchen", "manager", "admin"]);
@@ -265,6 +274,7 @@ import Icon from "../../components/Icon.astro";
       <span class="tk__code">#${esc(t.code)}</span>
       <span class="tk__age" data-age="${t.created_at}"></span>
     </div>
+    ${t.customers?.name ? `<p class="tk__guest">For <b>${esc(t.customers.name)}</b></p>` : ""}
     <ul>${(t.order_items || []).map((i) => `<li><b>${i.qty}×</b> ${esc(i.name)}</li>`).join("")}</ul>
     ${t.note ? `<p class="tk__note">“${esc(t.note)}”</p>` : ""}
     <div class="tk__actions">
@@ -297,7 +307,7 @@ import Icon from "../../components/Icon.astro";
   }
 
   // ---------- data
-  const SELECT = "id, code, table_label, status, note, created_at, order_items(name, qty)";
+  const SELECT = "id, code, table_label, status, note, created_at, order_items(name, qty), customers(name)";
   async function loadAll() {
     const { data, error } = await sb()
       .from("orders")

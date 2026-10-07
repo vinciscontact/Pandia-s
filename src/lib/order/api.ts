@@ -11,6 +11,9 @@ const liveApi: OrderApi = {
       p_lines: req.lines.map((l) => ({ id: l.dishId, qty: l.qty })), // prices are decided by the server
       p_note: req.note ?? null,
       p_token: req.sessionToken ?? null,
+      p_phone: req.guest?.phone ?? null,
+      p_name: req.guest?.name ?? null,
+      p_updates: req.guest?.updates ?? false,
     });
     if (error) throw error;
     return data as OrderReceipt;

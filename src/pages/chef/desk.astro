@@ -36,6 +36,7 @@ import Icon from "../../components/Icon.astro";
           <span class="pill" data-p-state></span>
         </div>
         <p class="muted" data-p-since></p>
+        <p class="guestline" data-p-guest hidden></p>
         <div class="porders" data-p-orders></div>
         <dl class="psum">
           <div><dt>Subtotal</dt><dd data-p-sub></dd></div>
@@ -71,6 +72,14 @@ import Icon from "../../components/Icon.astro";
 </Staff>
 
 <style>
+  .guestline {
+    margin-top: 4px;
+    font-weight: 700;
+    color: var(--maroon-900);
+  }
+  .guestline a {
+    color: var(--red-700);
+  }
   .desk :global(.pin) {
     font-family: var(--font-mono);
     letter-spacing: 0.12em;
@@ -433,6 +442,7 @@ import Icon from "../../components/Icon.astro";
     total: number;
     opened_at: string;
     pin: string; // lets a guest's other phone join the bill
+    customers: { name: string | null; phone: string } | null; // who ordered (number given at first order)
   };
   type Call = { id: number; table_label: string; kind: "waiter" | "bill"; created_at: string };
 
@@ -453,7 +463,7 @@ import Icon from "../../components/Icon.astro";
     const b = page.branch;
     const [t, s, c, br] = await Promise.all([
       sb().from("dining_tables").select("label").eq("branch_id", b).eq("active", true),
-      sb().from("table_sessions").select("id, table_label, status, subtotal, tax, discount, total, opened_at, pin").eq("branch_id", b).in("status", ["open", "bill_requested", "paid"]),
+      sb().from("table_sessions").select("id, table_label, status, subtotal, tax, discount, total, opened_at, pin, customers(name, phone)").eq("branch_id", b).in("status", ["open", "bill_requested", "paid"]),
       sb().from("service_calls").select("id, table_label, kind, created_at").eq("branch_id", b).is("resolved_at", null).order("created_at"),
       sb().from("branches").select("tax_percent").eq("id", b).single(),
     ]);
@@ -540,6 +550,13 @@ import Icon from "../../components/Icon.astro";
     $("[data-p-since]").innerHTML = `Seated ${time(s.opened_at)} · ${minsSince(s.opened_at)} min${
       s.status !== "paid" ? ` · Table PIN <b class="pin">${esc(s.pin)}</b>` : ""
     }`;
+    const g = s.customers;
+    const gl = $("[data-p-guest]");
+    gl.hidden = !g;
+    if (g) {
+      const num = g.phone.replace(/^\+91(\d{5})(\d{5})$/, "$1 $2");
+      gl.innerHTML = `${esc(g.name || "Guest")} · <a href="tel:${esc(g.phone)}">${esc(num)}</a>`;
+    }
     $("[data-p-orders]").innerHTML = orders
       .map(
         (o) => `<div class="po ${o.status === "cancelled" ? "po--x" : ""}">

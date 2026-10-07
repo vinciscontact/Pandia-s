@@ -67,6 +67,13 @@ Each table QR opens `/order?branch=<branchId>&table=<n>`. Print the cards from `
 Guests order, see the running bill for their table, call the waiter, ask for the bill, then leave a rating
 (every guest then gets the "Share on Google" button; low ratings alert the manager).
 
+**The guest's number.** At their first "Send to kitchen" the guest gives a mobile number (required, 10-digit
+Indian, no OTP) and their name (required), so staff bring each order to the right person; no messages are sent. It's remembered on that phone
+and stored once per number in `customers`, linked to every order and bill (`supabase/migrations/20261007_customers.sql`).
+Friends who join a bill with the table PIN aren't asked again. The desk shows the guest on the bill; Dashboard →
+Customers lists them (owner: all branches, manager: own branch) with CSV export for a WhatsApp/SMS tool later.
+Plain-language notice at `/privacy`. Nothing is messaged yet.
+
 **Getting back to the bill.** The phone that orders keeps a private key for the table's open bill, so a refresh or
 reopened tab lands straight back on it. Every open bill also has a 4-digit **table PIN**, shown on the guest's bill
 screen and on the desk screen. Any other phone (a friend, another browser, cleared data) that scans the QR while the

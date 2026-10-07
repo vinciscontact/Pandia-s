@@ -18,6 +18,7 @@ import Icon from "../../components/Icon.astro";
       <button type="button" data-tab="overview" aria-current="page"><Icon name="chart" /> Overview</button>
       <button type="button" data-tab="bills"><Icon name="receipt" /> Bills</button>
       <button type="button" data-tab="feedback"><Icon name="message" /> Feedback <b class="badge" data-fb-badge hidden></b></button>
+      <button type="button" data-tab="customers"><Icon name="users" /> Customers</button>
       <button type="button" data-tab="menu" data-admin-only><Icon name="pot" /> Menu & prices</button>
       <button type="button" data-tab="setup" data-admin-only><Icon name="table" /> Branches & tables</button>
       <button type="button" data-tab="staff" data-admin-only><Icon name="users" /> Staff</button>
@@ -55,6 +56,25 @@ import Icon from "../../components/Icon.astro";
         <label><input type="checkbox" data-fb-open /> Only unresolved</label>
       </div>
       <div class="fblist" data-fb-list></div>
+    </section>
+
+    <!-- CUSTOMERS -->
+    <section data-pane="customers" hidden>
+      <div class="scard">
+        <div class="menu-tools">
+          <input class="sinput" type="search" placeholder="Search name or number…" data-c-search aria-label="Search customers" />
+          <span class="grow"></span>
+          <button type="button" class="sbtn" data-c-export><Icon name="receipt" /> Export CSV</button>
+        </div>
+        <p class="muted small" data-c-sum></p>
+        <div class="tbl-wrap">
+          <table class="tbl">
+            <thead><tr><th>Name</th><th>Mobile</th><th class="num">Visits</th><th class="num">Ordered ₹</th><th>Last order</th><th data-col-cbranch>Branch</th></tr></thead>
+            <tbody data-customers></tbody>
+          </table>
+        </div>
+        <p class="empty" data-c-empty hidden>No customers yet. Numbers appear here after guests order from the table QR.</p>
+      </div>
     </section>
 
     <!-- MENU -->
@@ -476,6 +496,9 @@ import Icon from "../../components/Icon.astro";
     flex: 1;
     max-width: 360px;
   }
+  .menu-tools .grow {
+    flex: 1;
+  }
 
   .setup {
     display: grid;
@@ -555,7 +578,7 @@ import Icon from "../../components/Icon.astro";
   page.onBranchChange(() => load());
 
   function load() {
-    ({ overview, bills, feedback, menu, setup, staff } as Record<string, () => Promise<void>>)[tab]().catch((e) => {
+    ({ overview, bills, feedback, customers, menu, setup, staff } as Record<string, () => Promise<void>>)[tab]().catch((e) => {
       console.error(e);
       toast("Couldn't load. Check the connection.", "err");
     });
@@ -650,6 +673,50 @@ import Icon from "../../components/Icon.astro";
       .join("");
     $("[data-bills-empty]").hidden = !!data?.length;
   }
+
+  // ---------- CUSTOMERS (numbers taken at the first order; owner sees all, manager their branch)
+  type Cust = { id: string; phone: string; name: string | null; updates_ok: boolean; first_seen: string; last_order: string; visits: number; orders: number; spent: number; last_branch: string };
+  let custRows: Cust[] = [];
+  let custTimer: number | undefined;
+  const fmtPhone = (p: string) => p.replace(/^\+91(\d{5})(\d{5})$/, "$1 $2");
+  async function customers() {
+    const { data, error } = await sb().rpc("list_customers", {
+      p_branch: page.branch || null,
+      p_search: $<HTMLInputElement>("[data-c-search]").value.trim() || null,
+    });
+    if (error) throw error;
+    custRows = (data || []) as Cust[];
+    $("[data-col-cbranch]").hidden = !!page.branch;
+    $("[data-c-sum]").textContent = custRows.length ? `${custRows.length} customer${custRows.length === 1 ? "" : "s"}` : "";
+    $("[data-customers]").innerHTML = custRows
+      .map(
+        (c) => `<tr><td>${esc(c.name || "–")}</td><td><a href="tel:${esc(c.phone)}">${esc(fmtPhone(c.phone))}</a></td>
+          <td class="num">${c.visits}</td><td class="num">${rupee(c.spent)}</td><td>${dateTime(c.last_order)}</td>
+          ${page.branch ? "" : `<td>${esc(page.branchName(c.last_branch))}</td>`}</tr>`
+      )
+      .join("");
+    $("[data-c-empty]").hidden = custRows.length > 0;
+  }
+  $("[data-c-search]").addEventListener("input", () => {
+    clearTimeout(custTimer);
+    custTimer = window.setTimeout(() => customers().catch(() => toast("Couldn't search.", "err")), 300);
+  });
+  // spreadsheet copy of the customer list (Excel opens it correctly thanks to the BOM)
+  $("[data-c-export]").addEventListener("click", () => {
+    if (!custRows.length) return toast("Nothing to export yet.");
+    const cell = (v: unknown) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+    const head = ["Name", "Mobile", "Visits", "Orders", "Ordered (Rs)", "First seen", "Last order", "Last branch"];
+    const rows = custRows.map((c) => [
+      c.name || "", c.phone, c.visits, c.orders, Number(c.spent).toFixed(2),
+      c.first_seen.slice(0, 10), c.last_order.slice(0, 10), page.branchName(c.last_branch),
+    ]);
+    const csv = "\ufeff" + [head, ...rows].map((r) => r.map(cell).join(",")).join("\r\n");
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
+    a.download = `pandias-customers-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+  });
 
   // ---------- FEEDBACK
   type Fb = { id: string; branch_id: string; table_label: string; rating: number; food: number | null; service: number | null; comment: string | null; name: string | null; phone: string | null; created_at: string; google_clicked_at: string | null; resolved_at: string | null; resolution_note: string | null };

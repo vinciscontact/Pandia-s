@@ -150,6 +150,20 @@ const branchJson = JSON.stringify(branches.map((b) => ({ id: b.id, name: b.name,
       <label class="sheet__note">Anything for the kitchen?
         <textarea rows="2" maxlength="200" placeholder="Less spicy, extra salna, no onion…" data-note></textarea>
       </label>
+      <!-- who's ordering: asked once, at the first "Send to kitchen"; remembered on this phone -->
+      <div class="guest" data-guest hidden>
+        <p class="guest__title">Your details</p>
+        <label>Your name<input name="gname" maxlength="80" autocomplete="given-name" placeholder="So we bring your order to you" aria-describedby="guest-err" /></label>
+        <label>Mobile number
+          <span class="guest__phone"><span aria-hidden="true">+91</span><input name="gphone" type="tel" inputmode="numeric" autocomplete="tel-national" maxlength="14" placeholder="98765 43210" aria-describedby="guest-err" /></span>
+        </label>
+        <p class="guest__err" id="guest-err" data-guest-err role="alert" hidden></p>
+        <p class="guest__fine">Your name helps us bring the order to you without mix-ups. Your number is only to reach you about this order. We don't send messages. <a href="/privacy" target="_blank">Privacy</a></p>
+      </div>
+      <p class="guest-known" data-guest-known hidden>
+        <span>Ordering as <b data-guest-who></b></span>
+        <button type="button" data-guest-change>Change</button>
+      </p>
       <div class="sheet__foot">
         <div class="sheet__sum"><span>Total</span><b data-sheet-total>₹0</b></div>
         <button type="button" class="btn sheet__place" data-place>Send to kitchen <Icon name="arrow" /></button>
@@ -469,6 +483,78 @@ const branchJson = JSON.stringify(branches.map((b) => ({ id: b.id, name: b.name,
   }
   .sheet__note {
     padding: 14px 22px 0;
+  }
+  .guest {
+    display: grid;
+    gap: 12px;
+    margin: 16px 22px 0;
+    padding: 16px;
+    border: 1.5px solid var(--line);
+    border-radius: var(--radius-sm);
+    background: var(--surface);
+  }
+  .guest__title {
+    font-family: var(--font-display);
+    font-stretch: 85%;
+    font-weight: 700;
+    font-size: 1.05rem;
+    color: var(--maroon-900);
+  }
+  .guest__phone {
+    display: flex;
+    align-items: stretch;
+    border: 1.5px solid var(--line);
+    border-radius: var(--radius-sm);
+    background: var(--cream-50);
+    overflow: hidden;
+  }
+  .guest__phone:focus-within {
+    border-color: var(--gold-500);
+  }
+  .guest__phone > span {
+    display: grid;
+    place-items: center;
+    padding: 0 12px;
+    background: var(--cream-200);
+    font-weight: 700;
+    color: var(--maroon-900);
+  }
+  .guest__phone input {
+    flex: 1;
+    min-width: 0;
+    border: 0;
+    border-radius: 0;
+    font-size: 1.1rem;
+    letter-spacing: 0.04em;
+  }
+  .guest__err {
+    margin: 0;
+    color: var(--red-600);
+    font-weight: 600;
+    font-size: 0.9rem;
+  }
+  .guest__fine {
+    font-size: 0.78rem;
+    color: var(--text-soft);
+  }
+  .guest-known {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    margin: 16px 22px 0;
+    padding: 10px 14px;
+    background: var(--cream-200);
+    border-radius: var(--radius-sm);
+    font-size: 0.92rem;
+  }
+  .guest-known button {
+    border: 0;
+    background: none;
+    padding: 4px 0;
+    color: var(--red-700);
+    font-weight: 700;
+    text-decoration: underline;
   }
   .sheet__foot {
     padding: 16px 22px calc(18px + env(safe-area-inset-bottom));
@@ -833,7 +919,7 @@ const branchJson = JSON.stringify(branches.map((b) => ({ id: b.id, name: b.name,
 <script>
   import { orderApi } from "../lib/order/api";
   import { friendlyError } from "../lib/supabase";
-  import type { CartLine, OrderStage, Visit } from "../lib/order/types";
+  import type { CartLine, Guest, OrderStage, Visit } from "../lib/order/types";
 
   type BranchInfo = { id: string; name: string; tables: number; maps: string };
   const root = document.querySelector<HTMLElement>("[data-order]")!;
@@ -893,6 +979,12 @@ const branchJson = JSON.stringify(branches.map((b) => ({ id: b.id, name: b.name,
       cart = JSON.parse(store.get(KEY) || "{}");
     } catch {}
     let token = store.get(VISIT);
+    // the guest, remembered on this phone across tables and visits
+    const GUEST = "pd-guest";
+    let guest: Guest | null = null;
+    try {
+      guest = JSON.parse(store.get(GUEST) || "null");
+    } catch {}
 
     $("[data-table-no]").textContent = table;
     $("[data-branch-name]").textContent = `Hotel Pandia's, ${branch.name}`;
@@ -984,7 +1076,67 @@ const branchJson = JSON.stringify(branches.map((b) => ({ id: b.id, name: b.name,
     });
 
     const sheet = $<HTMLDialogElement>("[data-sheet]");
-    $("[data-open-cart]").addEventListener("click", () => sheet.showModal());
+    // ---------- guest details: needed unless this table's bill already has a number
+    const guestBox = $("[data-guest]");
+    const knownBox = $("[data-guest-known]");
+    const guestErr = $("[data-guest-err]");
+    const gPhone = $<HTMLInputElement>("[name=gphone]");
+    const gName = $<HTMLInputElement>("[name=gname]");
+    const tenDigits = (raw: string) => {
+      let d = raw.replace(/\D/g, "");
+      if (d.length === 12 && d.startsWith("91")) d = d.slice(2);
+      else if (d.length === 11 && d.startsWith("0")) d = d.slice(1);
+      return /^[6-9]\d{9}$/.test(d) ? d : null;
+    };
+    const pretty = (d: string) => `${d.slice(0, 5)} ${d.slice(5)}`;
+    function paintGuest(forceForm = false) {
+      guestErr.hidden = true;
+      const needed = !(token && visit?.hasGuest);
+      if (guest && !forceForm) {
+        knownBox.hidden = false;
+        guestBox.hidden = true;
+        $("[data-guest-who]").textContent = (guest.name ? guest.name + " · " : "") + pretty(guest.phone);
+      } else {
+        knownBox.hidden = true;
+        guestBox.hidden = !needed && !forceForm;
+        if (guest) {
+          gPhone.value = pretty(guest.phone);
+          gName.value = guest.name || "";
+        }
+      }
+    }
+    $("[data-guest-change]").addEventListener("click", () => {
+      paintGuest(true);
+      gPhone.focus();
+    });
+    gPhone.addEventListener("input", () => (guestErr.hidden = true));
+    gName.addEventListener("input", () => (guestErr.hidden = true));
+    /** the guest to send with this order, or "invalid" (with a message shown) when the form isn't right */
+    function readGuest(): Guest | null | "invalid" {
+      if (guestBox.hidden) return guest;
+      const name = gName.value.trim();
+      if (name.length < 2) {
+        guestErr.textContent = "Please add your name, so we bring your order to the right person.";
+        guestErr.hidden = false;
+        gName.focus();
+        return "invalid";
+      }
+      const d = tenDigits(gPhone.value);
+      if (!d) {
+        guestErr.textContent = gPhone.value.trim()
+          ? "That doesn't look like a mobile number. Use 10 digits, e.g. 98765 43210."
+          : "Please add your mobile number so we can send your order.";
+        guestErr.hidden = false;
+        gPhone.focus();
+        return "invalid";
+      }
+      return { phone: d, name, updates: false };
+    }
+
+    $("[data-open-cart]").addEventListener("click", () => {
+      paintGuest();
+      sheet.showModal();
+    });
     $("[data-close]").addEventListener("click", () => sheet.close());
     sheet.addEventListener("click", (e) => {
       if (e.target === sheet) sheet.close();
@@ -994,6 +1146,8 @@ const branchJson = JSON.stringify(branches.map((b) => ({ id: b.id, name: b.name,
       const btn = e.currentTarget as HTMLButtonElement;
       const lines = Object.values(cart);
       if (!lines.length || btn.disabled) return;
+      const g = readGuest();
+      if (g === "invalid") return;
       btn.disabled = true;
       btn.textContent = "Sending…";
       try {
@@ -1003,9 +1157,14 @@ const branchJson = JSON.stringify(branches.map((b) => ({ id: b.id, name: b.name,
           lines,
           note: $<HTMLTextAreaElement>("[data-note]").value.trim() || undefined,
           sessionToken: token || undefined,
+          guest: g || undefined,
         });
         token = receipt.sessionToken;
         store.set(VISIT, token);
+        if (g) {
+          guest = g;
+          store.set(GUEST, JSON.stringify(g));
+        }
         cart = {};
         $<HTMLTextAreaElement>("[data-note]").value = "";
         save();
@@ -1014,7 +1173,13 @@ const branchJson = JSON.stringify(branches.map((b) => ({ id: b.id, name: b.name,
         toast(`Order ${receipt.code} is with the kitchen`);
       } catch (err) {
         console.error(err);
-        if (String((err as { message?: string })?.message).includes("table_busy")) {
+        const msg = String((err as { message?: string })?.message);
+        if (msg.includes("phone_required") || msg.includes("bad_phone")) {
+          paintGuest(true);
+          guestErr.textContent = friendlyError(err);
+          guestErr.hidden = false;
+          gPhone.focus();
+        } else if (msg.includes("table_busy")) {
           // someone else's bill is open on this table (or ours was closed and a new party sat down)
           sheet.close();
           showJoin();

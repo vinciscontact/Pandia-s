@@ -19,6 +19,8 @@ export function friendlyError(e: unknown): string {
   const msg = (e as { message?: string })?.message || String(e);
   const map: Record<string, string> = {
     unknown_table: "We couldn't find this table. Please scan the QR again.",
+    phone_required: "Please add your mobile number so we can send your order.",
+    bad_phone: "That mobile number doesn't look right. Use a 10-digit Indian number.",
     too_fast: "Hold on a second, your last order is still being sent.",
     too_many_orders: "This table has a lot of orders. Please ask your server.",
     bad_qty: "Up to 30 of one dish per order, please.",
